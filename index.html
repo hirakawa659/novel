@@ -5,29 +5,31 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>エディタ</title>
     <style>
-        body { font-family: monospace, 'Courier New', sans-serif; background: #fafafa; margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; -webkit-text-size-adjust: 100%; }
-        #sidebar { width: 220px; background: #f0f0f4; border-right: 1px solid #ddd; display: flex; flex-direction: column; padding: 10px; flex-shrink: 0; }
+        /* 画面全体の縦スクロールを完全に禁止し、メニューが上に逃げるのを絶対に防ぐ */
+        body { font-family: monospace, 'Courier New', sans-serif; background: #fafafa; margin: 0; padding: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden; -webkit-text-size-adjust: 100%; }
+        
+        #mainContainer { display: flex; flex-grow: 1; height: calc(100vh - 55px); width: 100%; overflow: hidden; }
+        
+        #sidebar { width: 220px; background: #f0f0f4; border-right: 1px solid #ddd; display: flex; flex-direction: column; padding: 10px; flex-shrink: 0; height: 100%; }
         .sidebar-btn { padding: 5px; font-size: 12px; cursor: pointer; margin-bottom: 5px; width: 100%; }
         #treeRoot { overflow-y: auto; flex-grow: 1; font-size: 14px; }
         .item-label { padding: 4px; border-radius: 4px; cursor: pointer; }
         .item-label.active { background: #e4e4e7; font-weight: bold; }
         
-        /* 画面上部にヘッダーを100%絶対不動で溶接する設定 */
-        .main-content { flex-grow: 1; display: flex; flex-direction: column; height: 100vh; width: 100%; overflow: hidden; position: relative; }
-        .controls { display: flex; gap: 8px; background: #fff; padding: 10px; border-bottom: 1px solid #ddd; align-items: center; flex-wrap: wrap; width: 100%; box-sizing: border-box; flex-shrink: 0; position: absolute; top: 0; left: 0; height: auto; z-index: 9999; }
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; height: 100%; width: 100%; overflow: hidden; }
+        
+        /* ボタンエリアを画面の最上部に独立して配置。高さ（55px）をガチガチに固定 */
+        .controls { display: flex; gap: 8px; background: #fff; padding: 10px; border-bottom: 1px solid #ddd; align-items: center; flex-wrap: wrap; width: 100%; box-sizing: border-box; flex-shrink: 0; height: 55px; }
         button { padding: 6px 10px; font-size: 12px; font-weight: bold; cursor: pointer; background: #f0f0f2; border: 1px solid #ccc; border-radius: 4px; }
         .btn-check { background: #e0f2fe; color: #0369a1; }
         .counter { font-size: 13px; margin-right: 10px; }
         
-        /* 執筆エリアの部屋をボタンメニューの下から独立して開始させる設定 */
-        .editor-container { flex-grow: 1; padding: 20px; margin-top: 55px; overflow-y: auto; overflow-x: auto; display: flex; justify-content: flex-start; align-items: flex-start; box-sizing: border-box; }
+        /* 原稿用紙の部屋「だけ」を単独で縦横スクロールさせる（上のボタンは絶対に巻き込まれない） */
+        .editor-container { flex-grow: 1; padding: 20px; overflow-y: auto; overflow-x: auto; display: flex; justify-content: flex-start; align-items: flex-start; box-sizing: border-box; height: 100%; width: 100%; }
         .editor-wrapper { display: flex; background: #fff; border: 1px solid #ddd; border-radius: 6px; min-height: 600px; width: var(--wrapper-width, 1100px) !important; max-width: var(--wrapper-width, 1100px) !important; box-sizing: border-box; overflow: hidden; flex-shrink: 0; }
-
-
-
-                .line-numbers { width: 45px; border-right: 1px solid #eee; padding: 24px 0; text-align: right; font-size: 16px; color: #aaa; padding-right: 8px; user-select: none; font-family: monospace; flex-shrink: 0; box-sizing: border-box; }
+        .line-numbers { width: 45px; border-right: 1px solid #eee; padding: 24px 0; text-align: right; font-size: 16px; color: #aaa; padding-right: 8px; user-select: none; font-family: monospace; flex-shrink: 0; box-sizing: border-box; }
         
-        /* どんな特殊文字・英語もすべて35pxの正方形に閉じ込めて幅を狂わせない設定 */
+        /* 1文字＝縦横35pxの完全等幅正方形。特殊記号を1マスに強制変形する指定 */
         #editor {
             flex-grow: 1; padding: 24px; outline: none; white-space: pre-wrap; word-wrap: break-word; display: block !important; box-sizing: border-box;
             width: var(--editor-width, 1000px) !important; max-width: var(--editor-width, 1000px) !important; overflow: hidden;
@@ -35,7 +37,7 @@
             letter-spacing: 0px !important; font-kerning: none !important; text-transform: full-width !important; font-variant-numeric: tabular-nums !important; text-align: left !important;
         }
         
-        /* 上付き・下付き記号を強制的に幅1マスの箱に変形させてズレを完全撲滅する命令 */
+        /* 上付き・下付き記号をiPadのフォントバグに負けず幅1マスの箱に無理やり変形させる強力命令 */
         #editor div * { 
             font-size: 100% !important; vertical-align: baseline !important; position: static !important; 
             display: inline-block !important; width: 1em !important; max-width: 1em !important; min-width: 1em !important;
@@ -53,7 +55,7 @@
         .zenkaku-space { background-color: #f4f4f5; color: #aaa; display: inline-block !important; width: var(--cell-size, 35px) !important; text-align: center; }
         .zenkaku-space::before { content: "▢"; font-size: 14px; }
         
-        /* 半角スペースが出たらずっと背景をグレー色に染めて視認性をMAXにする設定 */
+        /* 半角スペースが出たらずっと背景をグレー色に染める指定 */
         .hankaku-space { background-color: #e4e4e7 !important; color: #71717a !important; display: inline-block !important; width: var(--cell-size, 35px) !important; text-align: center; border-radius: 2px; }
         .hankaku-space::before { content: "·"; font-size: 14px; font-weight: bold; }
         
@@ -65,33 +67,35 @@
     </style>
 </head>
 <body>
-<div id="sidebar">
-    <button class="sidebar-btn" onclick="toggleSidebar()">◀ メニューを閉じる</button>
-    <div style="display:flex; gap:4px;"><button class="sidebar-btn" onclick="addFolder()">+フォルダ</button><button class="sidebar-btn" onclick="addFile()">+新しい話</button></div>
-    <div id="treeRoot"></div>
+
+<div class="controls" id="controlBar">
+    <button onclick="toggleSidebar()" id="mainMenuBtn" style="display:none;">▶ メニューを開く</button>
+    <button onclick="goToParentFolder()">戻る</button>
+    <button onclick="document.execCommand('undo')">取り消し</button>
+    <button onclick="document.execCommand('redo')">やり直し</button>
+    <button onclick="document.execCommand('cut')">カット</button>
+    <button onclick="copyText()">コピー</button>
+    <button class="btn-check" onclick="checkHiddenChars()">隠し文字</button>
+    <button class="btn-check" onclick="checkHomographs()">ホモグラフ</button>
+    <button class="btn-check" onclick="checkProofread()">誤字チェック</button>
+    <div class="select-wrapper"><label>1行:</label><select id="widthSelect" onchange="changeWidth()"></select></div>
+    <div class="counter"><span id="charCount">0</span> 文字</div>
+    <span id="saveStatus" style="font-size:12px; color:#aaa;">保存完了</span>
 </div>
 
-
+<div id="mainContainer">
+    <div id="sidebar">
+        <div style="display:flex; gap:4px;"><button class="sidebar-btn" onclick="addFolder()">+フォルダ</button><button class="sidebar-btn" onclick="addFile()">+新しい話</button></div>
+        <div id="treeRoot"></div>
+    </div>
     <div class="main-content">
-    <div class="controls" id="controlBar">
-        <button onclick="toggleSidebar()" id="mainMenuBtn" style="display:none;">▶ メニューを開く</button>
-        <button onclick="goToParentFolder()">戻る</button>
-        <button onclick="document.execCommand('undo')">取り消し</button>
-        <button onclick="document.execCommand('redo')">やり直し</button>
-        <button onclick="document.execCommand('cut')">カット</button>
-        <button onclick="copyText()">コピー</button>
-        <button class="btn-check" onclick="checkHiddenChars()">隠し文字</button>
-        <button class="btn-check" onclick="checkHomographs()">ホモグラフ</button>
-        <button class="btn-check" onclick="checkProofread()">誤字チェック</button>
-        <div class="select-wrapper"><label>1行:</label><select id="widthSelect" onchange="changeWidth()"></select></div>
-        <div class="counter"><span id="charCount">0</span> 文字</div>
-        <span id="saveStatus" style="font-size:12px; color:#aaa;">保存完了</span>
-    </div>
-    <div class="editor-container">
-        <div class="editor-wrapper" id="editorWrapper"><div class="line-numbers" id="lineNumbers">1</div><div id="editor" contenteditable="true"><div><br></div></div></div>
-        <div id="proofPanel"><b style="color:#db2777; font-size:16px;">🔍 自動指摘・一括校正アドバイス一覧</b><hr><div id="proofList"></div></div>
+        <div class="editor-container">
+            <div class="editor-wrapper" id="editorWrapper"><div class="line-numbers" id="lineNumbers">1</div><div id="editor" contenteditable="true"><div><br></div></div></div>
+            <div id="proofPanel"><b style="color:#db2777; font-size:16px;">🔍 自動指摘・一括校正アドバイス一覧</b><hr><div id="proofList"></div></div>
+        </div>
     </div>
 </div>
+
 <script>
 const editor = document.getElementById('editor'), lineNumbers = document.getElementById('lineNumbers'), charCount = document.getElementById('charCount');
 const widthSelect = document.getElementById('widthSelect'), treeRoot = document.getElementById('treeRoot'), editorWrapper = document.getElementById('editorWrapper');
@@ -108,7 +112,8 @@ function initSelect() {
 function hardResetBugs() { localStorage.removeItem('novel_fs_data'); localStorage.removeItem('novel_current_id'); localStorage.removeItem('novel_raw_emergency'); }
 
 window.addEventListener('DOMContentLoaded', () => {
-    if (!localStorage.getItem('bug_fix_v9_done')) { hardResetBugs(); localStorage.setItem('bug_fix_v9_done', 'true'); }
+    // 過去のバグバージョン記憶を完全に上書き大掃除
+    if (!localStorage.getItem('bug_fix_v10_done')) { hardResetBugs(); localStorage.setItem('bug_fix_v10_done', 'true'); }
     initSelect();
     const savedFs = localStorage.getItem('novel_fs_data'), savedWidth = localStorage.getItem('novel_width'), savedCurrent = localStorage.getItem('novel_current_id'), savedRaw = localStorage.getItem('novel_raw_emergency');
     if (savedFs) { fsData = JSON.parse(savedFs); } else {
@@ -119,7 +124,12 @@ window.addEventListener('DOMContentLoaded', () => {
     widthSelect.value = savedWidth ? savedWidth : "30";
     renderTree(); loadFile(currentFileId); if (savedRaw) { editor.innerHTML = savedRaw; } changeWidth(); updateLines(); window.addEventListener('resize', changeWidth);
 });
-function toggleSidebar() { if (sidebar.style.display === 'none') { sidebar.style.display = 'flex'; mainMenuBtn.style.display = 'none'; } else { sidebar.style.display = 'none'; mainMenuBtn.style.display = 'block'; } setTimeout(changeWidth, 50); }
+
+function toggleSidebar() { 
+    if (sidebar.style.display === 'none') { sidebar.style.display = 'flex'; mainMenuBtn.style.display = 'none'; } 
+    else { sidebar.style.display = 'none'; mainMenuBtn.style.display = 'block'; }
+    setTimeout(changeWidth, 50);
+}
 function updateLines() { const divs = editor.querySelectorAll('#editor > div'); let count = divs.length === 0 ? 1 : divs.length, html = ''; for(let i=1; i<=count; i++) { html += i + '<br>'; } lineNumbers.innerHTML = html; charCount.textContent = editor.innerText.replace(/\n/g, '').length; }
 
 function changeWidth() {
