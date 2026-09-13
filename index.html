@@ -5,14 +5,14 @@ html,body{margin:0;padding:0;width:100%;height:100%;height:100dvh;overflow:hidde
 button{padding:6px 10px;font-size:12px;font-weight:bold;cursor:pointer;background:#f0f0f2;border:1px solid #ccc;border-radius:4px;flex-shrink:0}
 #b{display:flex;position:fixed;top:50px;bottom:0;left:0;right:0;width:100%;height:calc(100% - 50px);height:calc(100dvh - 50px);overflow:hidden}
 #s{width:240px;background:#f8fafc;border-right:1px solid #e2e8f0;padding:8px;display:flex;flex-direction:column;gap:6px;flex-shrink:0;box-sizing:border-box}
-.m{flex:1;padding:12px;padding-bottom:75vh;overflow-y:auto;overflow-x:hidden;box-sizing:border-box;display:flex;justify-content:center;-webkit-overflow-scrolling:touch}
-#w{display:flex;background:#fff;box-sizing:border-box;flex-shrink:0;margin:0 auto;min-height:calc(100vh - 80px);min-height:calc(100dvh - 80px)}
-.l{width:36px;border-right:1px solid #e5e7eb;padding:12px 0 0 0;text-align:right;font-size:12px;color:#aaa;padding-right:6px;user-select:none;flex-shrink:0;box-sizing:border-box;line-height:var(--cs)!important}
-#e{flex-grow:1;padding:12px 0 0 0;outline:0;white-space:pre-wrap;word-wrap:break-word;word-break:break-all;display:block!important;box-sizing:border-box;font-size:calc(var(--cs)*0.78)!important;line-height:var(--cs)!important;letter-spacing:calc(var(--cs)*0.22)!important;text-align:left!important;caret-color:#2563eb;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo","MS Gothic",monospace;font-feature-settings:"halt" 0,"palt" 0,"pkna" 0,"fwid" 1!important;font-variant-east-asian:full-width!important;font-kerning:none!important;background-image:linear-gradient(90deg,#ececec 1px,transparent 1px),linear-gradient(#ececec 1px,transparent 1px)!important;background-size:var(--cs) var(--cs)!important;background-repeat:repeat!important;background-position:0 12px!important;min-height:100%}
-#e div{min-height:var(--cs)!important;height:var(--cs)!important;display:block!important;box-sizing:border-box;text-align:left!important;line-height:var(--cs)!important;padding:0!important;padding-left:calc(var(--cs)*0.11)!important;margin:0!important;background:transparent!important;width:100%!important;overflow:visible!important}
+.m{flex:1;padding:16px 12px 75vh 12px;overflow-y:auto;overflow-x:hidden;box-sizing:border-box;display:flex;justify-content:center;-webkit-overflow-scrolling:touch;background:#f1f5f9}
+#w{display:flex;background:#fff;box-sizing:border-box;flex-shrink:0;margin:0 auto;min-height:calc(100vh + 60vh);min-height:calc(100dvh + 60vh);box-shadow:0 1px 4px rgba(0,0,0,0.06)}
+.l{width:36px;border-right:1px solid #e5e7eb;padding:0;text-align:right;font-size:12px;color:#aaa;padding-right:6px;user-select:none;flex-shrink:0;box-sizing:border-box;line-height:var(--cs)!important}
+#e{flex-grow:1;padding:0;outline:0;white-space:pre-wrap;word-wrap:break-word;word-break:break-all;display:block!important;box-sizing:border-box;font-size:calc(var(--cs)*0.78)!important;line-height:var(--cs)!important;letter-spacing:calc(var(--cs)*0.22)!important;text-align:left!important;caret-color:#2563eb;font-family:"Hiragino Kaku Gothic ProN","Yu Gothic","Meiryo","MS Gothic",monospace;font-feature-settings:"halt" 0,"palt" 0,"pkna" 0,"fwid" 1!important;font-variant-east-asian:full-width!important;font-kerning:none!important;background-image:linear-gradient(90deg,#ececec 1px,transparent 1px),linear-gradient(#ececec 1px,transparent 1px)!important;background-size:var(--cs) var(--cs)!important;background-repeat:repeat!important;background-position:0 0!important;min-height:100%}
+#e div{min-height:var(--cs)!important;display:block!important;box-sizing:border-box;text-align:left!important;line-height:var(--cs)!important;padding:0!important;padding-left:calc(var(--cs)*0.11)!important;margin:0!important;background:transparent!important;width:100%!important;overflow:visible!important}
 #e span{display:inline;margin:0;padding:0;box-sizing:border-box}
-.sub-sup{display:inline-block!important;width:calc(var(--cs)*0.78)!important;height:calc(var(--cs)*0.78)!important;line-height:calc(var(--cs)*0.78)!important;letter-spacing:0!important;text-align:center!important;box-sizing:border-box!important;margin:0!important;padding:0!important;font-size:calc(var(--cs)*0.65)!important;vertical-align:middle!important;background:#e0e7ff!important;color:#1e3a8a!important;border-radius:2px!important;user-select:all}
-.sp-nonzen{display:inline!important;background:#fef08a!important;color:inherit!important;border-bottom:2px solid #f59e0b!important;border-radius:2px!important;white-space:pre!important;box-sizing:border-box}
+.sub-sup{display:inline-block!important;width:calc(var(--cs)*0.78)!important;height:calc(var(--cs)*0.78)!important;line-height:calc(var(--cs)*0.78)!important;letter-spacing:0!important;text-align:center!important;box-sizing:border-box!important;margin:0!important;margin-right:calc(var(--cs)*0.22)!important;padding:0!important;font-size:calc(var(--cs)*0.65)!important;vertical-align:middle!important;background:#e0e7ff!important;color:#1e3a8a!important;border-radius:2px!important;user-select:all}
+.sp-nonzen{display:inline!important;background:#fef08a!important;color:inherit!important;border-bottom:2px solid #f59e0b!important;border-radius:2px!important;white-space:pre!important;box-sizing:border-box;font-size:inherit!important;letter-spacing:inherit!important}
 body.sp-color-off #e .sp-nonzen{background:transparent!important;border-bottom:none!important}
 .sp{background:#e4e4e7!important;color:#71717a!important;border-radius:2px}
 .hm-mark{background:#ffedd5!important;border-bottom:2px solid #ea580c!important;color:#c2410c!important;font-weight:bold!important;border-radius:2px}
@@ -88,9 +88,29 @@ let d={r:[]},f=null,pId=null;
 for(let i=20; i<=40; i++)l.innerHTML+=`<option value="${i}">${i}字</option>`;l.value="30";
 window.onload=()=>{
     try{document.execCommand('defaultParagraphSeparator', false, 'div');}catch(err){}
-    let s=localStorage.getItem('n_d'),sw=localStorage.getItem('n_w'),sc=localStorage.getItem('n_c'),sr=localStorage.getItem('n_r');
-    if(s){d=JSON.parse(s)}else{let id='d_'+Date.now();d.r.push({id,type:'file',name:'第1話',content:'<div><br></div>'});f=id}
-    if(sc)f=sc;if(sw)l.value=sw;r();o(f);if(sr&&sr!=="<div><br></div>")e.innerHTML=sr;
+    let s=localStorage.getItem('n_d'),sw=localStorage.getItem('n_w'),sc=localStorage.getItem('n_c');
+    if(s){try{d=JSON.parse(s)}catch(err){}}
+    if(!d||!d.r||d.r.length===0){
+        let id='d_'+Date.now();
+        d={r:[{id,type:'file',name:'第1話',content:'<div><br></div>'}]};
+        f=id;
+    }else{
+        if(sc&&g(sc)){
+            f=sc;
+        }else{
+            function findFirst(items){
+                for(let it of items){
+                    if(it.type==='file')return it.id;
+                    if(it.children){let res=findFirst(it.children);if(res)return res;}
+                }
+                return null;
+            }
+            f=findFirst(d.r)||d.r[0].id;
+        }
+    }
+    if(sw)l.value=sw;
+    r();
+    o(f);
     if(localStorage.getItem('n_sp_color')==='off'){
         document.body.classList.add('sp-color-off');
         const btn=document.getElementById('tool_spcol');
@@ -100,6 +120,46 @@ window.onload=()=>{
     initToolDragAndDrop();
     norm();cleanSpans();autoFormatEditor();highlightSpaces();z();v();
 };
+function cleanExcessiveBlankLines(){
+    let divs=e.querySelectorAll('#e>div');
+    if(divs.length<=1)return;
+    // 先頭の連続した空行を検出（別の所から入った時に20行以上飛ぶ不具合の自動修正）
+    let firstNonEmptyIdx=-1;
+    for(let idx=0; idx<divs.length; idx++){
+        let txt=divs[idx].innerText.replace(/[\r\n\s\u3000]/g,'');
+        if(txt.length>0 || divs[idx].querySelector('.sub-sup, .hidden-char-badge, .hm-mark, img')){
+            firstNonEmptyIdx=idx;
+            break;
+        }
+    }
+    if(firstNonEmptyIdx>0){
+        for(let i=0; i<firstNonEmptyIdx; i++){
+            divs[i].remove();
+        }
+    }
+    // 末尾の過剰な空行（3行以上の連続空行）も整理
+    divs=e.querySelectorAll('#e>div');
+    let lastIdx=divs.length-1;
+    let trailingEmptyCount=0;
+    while(lastIdx>=0){
+        let txt=divs[lastIdx].innerText.replace(/[\r\n\s\u3000]/g,'');
+        let hasObj=divs[lastIdx].querySelector('.sub-sup, .hidden-char-badge, .hm-mark, img');
+        if(txt.length===0&&!hasObj){
+            trailingEmptyCount++;
+            lastIdx--;
+        }else{
+            break;
+        }
+    }
+    if(trailingEmptyCount>2){
+        for(let i=0; i<trailingEmptyCount-1; i++){
+            let all=e.querySelectorAll('#e>div');
+            if(all.length>1){
+                all[all.length-1].remove();
+            }
+        }
+    }
+}
 function cleanSpans(){
     let charBoxes=e.querySelectorAll('.char-box');
     charBoxes.forEach(s=>{
@@ -109,7 +169,8 @@ function cleanSpans(){
     });
     let nonzen=e.querySelectorAll('.sp-nonzen');
     nonzen.forEach(s=>{
-        let txt=s.textContent||' ';
+        let txt=s.textContent||'';
+        // 空白以外の文字が入っていたら確実にテキストに戻す
         s.replaceWith(txt);
     });
     let spans=e.querySelectorAll('span:not(.sub-sup):not(.hidden-char-badge):not(.hm-mark):not(.er)');
@@ -174,7 +235,7 @@ function autoFormatEditor(optActiveLine, optActiveOffset){
             tn.parentNode.replaceChild(frag,tn);
         }
     }
-    if(activeLine&&activeOffset!==null&&activeOffset!==undefined){
+    if(changed && activeLine&&activeOffset!==null&&activeOffset!==undefined){
         setCaretCharOffset(activeLine,activeOffset);
     }
 }
@@ -194,7 +255,8 @@ function setCaretCharOffset(lineEl,targetOffset){
             let range=document.createRange();
             let offsetInNode=Math.min(targetOffset-count,len);
             let p=node.parentElement;
-            if(p&&p.getAttribute('contenteditable')==='false'){
+            let isSpecialElem = p && (p.getAttribute('contenteditable')==='false' || p.classList.contains('sp-nonzen') || p.classList.contains('sub-sup') || p.classList.contains('hm-mark') || p.classList.contains('hidden-char-badge'));
+            if(isSpecialElem){
                 if(offsetInNode>=len){
                     range.setStartAfter(p);
                 }else{
@@ -211,13 +273,23 @@ function setCaretCharOffset(lineEl,targetOffset){
         }
         count+=len;
     }
-    if(!set&&lastNode){
+    if(!set){
         let range=document.createRange();
-        let p=lastNode.parentElement;
-        if(p&&p.getAttribute('contenteditable')==='false'){
-            range.setStartAfter(p);
+        if(lastNode){
+            let p=lastNode.parentElement;
+            let isSpecialElem = p && (p.getAttribute('contenteditable')==='false' || p.classList.contains('sp-nonzen') || p.classList.contains('sub-sup') || p.classList.contains('hm-mark') || p.classList.contains('hidden-char-badge'));
+            if(isSpecialElem){
+                range.setStartAfter(p);
+            }else{
+                range.setStart(lastNode,lastNode.nodeValue.length);
+            }
         }else{
-            range.setStart(lastNode,lastNode.nodeValue.length);
+            let br=lineEl.querySelector('br');
+            if(br){
+                range.setStartBefore(br);
+            }else{
+                range.selectNodeContents(lineEl);
+            }
         }
         range.collapse(true);
         sel.removeAllRanges();
@@ -228,6 +300,21 @@ function setCaretCharOffset(lineEl,targetOffset){
 // 全角スペース以外のスペース（半角スペースやタブ等）に背景色を付ける
 // 「␣」等の記号は絶対に使わず、元のスペース文字そのままで表示
 function highlightSpaces(optActiveLine, optActiveOffset){
+    // まず既存の .sp-nonzen を検査し、空白以外の文字が含まれていたら即座に解除（黄色文字化の根本防止）
+    let existingSpans = e.querySelectorAll('.sp-nonzen');
+    let hadCleaned = false;
+    existingSpans.forEach(sp => {
+        let txt = sp.textContent || '';
+        // 空白文字（半角スペース、タブ、ノーブレークスペース等）以外の文字が含まれている場合
+        if (/[^\s\u00A0]/.test(txt)) {
+            hadCleaned = true;
+            let tn = document.createTextNode(txt);
+            sp.parentNode.replaceChild(tn, sp);
+        }
+    });
+
+    if (document.body.classList.contains('sp-color-off')) return;
+
     let activeLine=optActiveLine;
     let activeOffset=optActiveOffset;
     if(activeLine===undefined){
@@ -257,7 +344,7 @@ function highlightSpaces(optActiveLine, optActiveOffset){
     }
     
     const regSpace=/([^\S\u3000\r\n]+)/g;
-    let changed=false;
+    let changed=hadCleaned;
     for(let tn of nodes){
         let val=tn.nodeValue;
         if(/[^\S\u3000\r\n]/.test(val)){
@@ -279,7 +366,7 @@ function highlightSpaces(optActiveLine, optActiveOffset){
             tn.parentNode.replaceChild(frag,tn);
         }
     }
-    if(activeLine&&activeOffset!==null&&activeOffset!==undefined){
+    if(changed && activeLine&&activeOffset!==null&&activeOffset!==undefined){
         setCaretCharOffset(activeLine,activeOffset);
     }
 }
@@ -426,6 +513,7 @@ function norm(){
         let lines=e.innerText.split('\n');
         e.innerHTML=lines.map(l=>`<div>${l?l:'<br>'}</div>`).join('');
     }
+    cleanExcessiveBlankLines();
     cleanSpans();
 }
 function tgS(){
@@ -501,9 +589,19 @@ function v(){
         divs=e.querySelectorAll('div');
     }
     let totalLines=Math.max(1, divs.length);
+    
+    // 下の方へスクロールしても原稿用紙のマス目と行番号が自然に続くように描画行数を計算
+    let cs=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--cs'))||32;
+    let editorHeight=Math.max(e.clientHeight||0, w.clientHeight||0, (window.innerHeight||800)*1.6);
+    let visibleGridLines=Math.max(totalLines, Math.floor(editorHeight/cs));
+    
     let h='';
-    for(let i=1;i<=totalLines;i++){
-        h+=i+'<br>';
+    for(let i=1;i<=visibleGridLines;i++){
+        if(i<=totalLines){
+            h+=i+'<br>';
+        }else{
+            h+=`<span style="color:#cbd5e1;font-size:10px">${i}</span><br>`;
+        }
     }
     n.innerHTML=h;
     
@@ -520,12 +618,15 @@ function o(id){
         f=id;
         localStorage.setItem('n_c',id);
     }
+    cleanExcessiveBlankLines();
     norm();
     cleanSpans();
     autoFormatEditor();
     highlightSpaces();
     z();
     v();
+    const mCont=document.querySelector('.m');
+    if(mCont)mCont.scrollTop=0;
 }
 function s(){let i=g(f);if(i){i.content=e.innerHTML;localStorage.setItem('n_d',JSON.stringify(d))}}
 function g(id,items=d.r){for(let i of items){if(i.id===id)return i;if(i.children){let found=g(id,i.children);if(found)return found}}return null}
@@ -1184,7 +1285,18 @@ function sc(){
         let r=sel.getRangeAt(0),node=r.startContainer;
         if(node.nodeType===3)node=node.parentNode;
         while(node&&node!==e&&node.parentElement!==e){node=node.parentElement}
-        if(node&&node.parentElement===e){node.scrollIntoView({block:'nearest',behavior:'smooth'})}
+        if(node&&node.parentElement===e){
+            const mCont=document.querySelector('.m');
+            if(mCont){
+                const mRect=mCont.getBoundingClientRect();
+                const nRect=node.getBoundingClientRect();
+                if(nRect.top < mRect.top + 40){
+                    mCont.scrollTop -= (mRect.top + 40 - nRect.top);
+                }else if(nRect.bottom > mRect.bottom - 80){
+                    mCont.scrollTop += (nRect.bottom - (mRect.bottom - 80));
+                }
+            }
+        }
     },30);
 }
 
@@ -1206,7 +1318,7 @@ function scheduleFormat(){
         v();
         s();
         localStorage.setItem('n_r',e.innerHTML);
-    },400);
+    },1200);
 }
 
 e.oninput=()=>{
@@ -1216,6 +1328,13 @@ e.oninput=()=>{
     sc();
     scheduleFormat();
 };
+e.addEventListener('blur',()=>{
+    clearTimeout(formatTimer);
+    highlightSpaces();
+    autoFormatEditor();
+    v();
+    s();
+});
 e.addEventListener('paste',()=>{
     setTimeout(()=>{
         norm();cleanSpans();autoFormatEditor();highlightSpaces();v();s();localStorage.setItem('n_r',e.innerHTML);sc();
@@ -1405,57 +1524,132 @@ function resetToolOrder(){
 window.addEventListener('scroll',()=>{if(window.scrollY!==0||window.scrollX!==0)window.scrollTo(0,0)});
 e.addEventListener('focus',()=>{setTimeout(()=>{window.scrollTo(0,0);sc()},50)});
 
-/* なんでもないマス目（空行や行末の右側）をクリックした時に、カーソルを自然に合わせる（スペースを勝手に挿入して横飛びする不具合を解消） */
+/* なんでもないマス目（空行や行末の右側、原稿用紙のどこでも）をクリック・タップした時に、確実にカーソルを表示・配置する */
+function applyCaretToDiv(targetDiv, targetCol, maxCols){
+    if(!targetDiv) return;
+    targetCol = Math.min(targetCol, maxCols);
+    let lineText = targetDiv.innerText.replace(/\r?\n/g,'');
+    let sel = window.getSelection();
+    if(!sel) return;
+    let range = document.createRange();
+    
+    if(lineText.length === 0){
+        // 空行の場合
+        if(targetCol > 0){
+            targetDiv.innerHTML = '　'.repeat(targetCol);
+            let lastNode = targetDiv.lastChild;
+            if(lastNode && lastNode.nodeType === 3){
+                range.setStart(lastNode, lastNode.nodeValue.length);
+            } else {
+                range.selectNodeContents(targetDiv);
+                range.collapse(false);
+            }
+        } else {
+            let br = targetDiv.querySelector('br');
+            if(br){
+                range.setStartBefore(br);
+            } else {
+                range.setStart(targetDiv, 0);
+            }
+        }
+    } else {
+        // 文字がある行の場合
+        if(targetCol > lineText.length){
+            // 行末より右の文字がないマス目をクリック：全角スペースで埋めてそのマス目にカーソル配置
+            let pad = '　'.repeat(targetCol - lineText.length);
+            let tn = document.createTextNode(pad);
+            let br = targetDiv.querySelector('br');
+            if(br){
+                targetDiv.insertBefore(tn, br);
+            } else {
+                targetDiv.appendChild(tn);
+            }
+            range.selectNodeContents(targetDiv);
+            range.collapse(false);
+        } else {
+            // 文字の存在するマス目をクリック
+            setCaretCharOffset(targetDiv, targetCol);
+            return;
+        }
+    }
+    range.collapse(true);
+    sel.removeAllRanges();
+    sel.addRange(range);
+}
+
 function handleCellClick(ev){
-    if(ev.target.closest('#s')||ev.target.closest('.h')||ev.target.closest('#itemModal')||ev.target.closest('#repBar')) return;
+    if(ev.target.closest('#s')||ev.target.closest('.h')||ev.target.closest('#itemModal')||ev.target.closest('#repBar')||ev.target.closest('.modal-overlay')) return;
+    
+    // エディタに確実にフォーカスをあてる（iOSやモバイルでカーソル点滅とキーボード起動を確実に保証）
+    e.focus();
+    
     let rect=e.getBoundingClientRect();
     let cs=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--cs'))||32;
-    let padTop=12;
+    let maxCols=parseInt(l.value)||20;
     let padLeft=cs*0.11;
-    let clickY=ev.clientY-rect.top-padTop;
+    let clickY=ev.clientY-rect.top;
     let clickX=ev.clientX-rect.left-padLeft;
-    if(clickY<0)return;
+    
+    let divs=e.querySelectorAll('#e>div');
+    if(divs.length===0) divs=e.querySelectorAll('div');
+    if(divs.length===0) return;
+    
+    // 1. 本文より上をクリックした場合：1行目の先頭に合わせる
+    if(clickY<0){
+        let firstDiv=divs[0];
+        if(firstDiv){
+            setTimeout(()=>{
+                applyCaretToDiv(firstDiv, 0, maxCols);
+            }, 10);
+        }
+        return;
+    }
     
     let targetRow=Math.max(0,Math.floor(clickY/cs));
-    let divs=e.querySelectorAll('#e>div');
+    let targetCol=Math.max(0,Math.floor(clickX/cs));
+    targetCol=Math.min(targetCol, maxCols);
     
-    // 1. 本文より下の空行をクリックした場合：空行を作成し、その行の先頭にカーソルを合わせる（スペースは挿入しない）
+    // 2. 本文より下をクリックした場合：空行を追加して、クリックした行のマス目にカーソルを合わせる
     if(targetRow>=divs.length){
-        ev.preventDefault();
-        while(divs.length<=targetRow){
+        let safeMaxRow=Math.min(targetRow, divs.length + 30);
+        while(divs.length<=safeMaxRow){
             let nd=document.createElement('div');
             nd.innerHTML='<br>';
             e.appendChild(nd);
             divs=e.querySelectorAll('#e>div');
         }
-        let targetDiv=divs[targetRow];
-        v();s();
+        v();
+        s();
+        let targetDiv=divs[safeMaxRow];
         setTimeout(()=>{
-            let sel=window.getSelection(),range=document.createRange();
-            range.selectNodeContents(targetDiv);
-            range.collapse(true);
-            sel.removeAllRanges();
-            sel.addRange(range);
-        },10);
+            applyCaretToDiv(targetDiv, targetCol, maxCols);
+        }, 10);
         return;
     }
     
-    // 2. 既存の行で文字の右側のマス目を直接クリックした場合：行末に自然にカーソルを合わせる（スペースは挿入しない）
+    // 3. 既存の行をクリックした場合
     let targetDiv=divs[targetRow];
-    if(ev.target===e||ev.target===targetDiv){
-        let targetCol=Math.max(0,Math.floor(clickX/cs));
-        let lineText=targetDiv.innerText.replace(/\r?\n/g,'');
-        if(targetCol>lineText.length){
-            ev.preventDefault();
-            let sel=window.getSelection(),range=document.createRange();
-            range.selectNodeContents(targetDiv);
-            range.collapse(false);
-            sel.removeAllRanges();
-            sel.addRange(range);
-        }
+    if(targetDiv){
+        setTimeout(()=>{
+            applyCaretToDiv(targetDiv, targetCol, maxCols);
+        }, 10);
     }
 }
-e.addEventListener('mousedown',handleCellClick);
+e.addEventListener('mousedown',()=>{ if(document.activeElement !== e) e.focus(); });
+e.addEventListener('click',handleCellClick);
+w.addEventListener('click',(ev)=>{
+    if(ev.target===w||ev.target.classList.contains('l')||ev.target===n){
+        handleCellClick(ev);
+    }
+});
+const mContainer=document.querySelector('.m');
+if(mContainer){
+    mContainer.addEventListener('click',(ev)=>{
+        if(ev.target===mContainer){
+            handleCellClick(ev);
+        }
+    });
+}
 if(window.visualViewport){
     window.visualViewport.addEventListener('resize',()=>{window.scrollTo(0,0)});
     window.visualViewport.addEventListener('scroll',()=>{window.scrollTo(0,0)});
