@@ -1,25 +1,25 @@
-<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Editor</title><style>
-body{margin:0;display:flex;flex-direction:column;height:100vh;font-family:monospace;overflow:hidden;-webkit-text-size-adjust:100%}
-.h{display:flex;gap:8px;padding:10px;background:#fff;border-bottom:1px solid #ddd;height:55px;box-sizing:border-box;align-items:center;flex-shrink:0}
-#b{display:flex;flex:1;height:calc(100vh - 55px);overflow:hidden}
-#s{width:220px;background:#f0f0f4;border-right:1px solid #ddd;padding:10px;display:flex;flex-direction:column;gap:4px;flex-shrink:0}
-.m{flex:1;padding:20px;overflow:auto}
-#w{background:#fff;border:1px solid #ddd;border-radius:6px;min-height:600px;width:var(--g-w,1100px)!important;max-width:var(--g-w,1100px)!important;box-sizing:border-box;overflow:hidden;flex-shrink:0}
-.l{width:45px;border-right:1px solid #eee;padding:24px 0;text-align:right;font-size:16px;color:#aaa;padding-right:8px;user-select:none;flex-shrink:0;box-sizing:border-box;line-height:32px!important}
-#e{flex-grow:1;padding:24px;outline:0;white-space:pre-wrap;word-wrap:break-word;display:block!important;box-sizing:border-box;width:100%!important;overflow:hidden;font-size:32px!important;line-height:32px!important;letter-spacing:0px!important;font-kerning:none!important;text-transform:full-width!important;font-variant-numeric:tabular-nums!important;text-align:left!important}
-#e div *{font-size:100%!important;vertical-align:baseline!important;position:static!important;display:inline-block!important;width:1em!important;max-width:1em!important;min-width:1em!important;text-align:center!important;line-height:inherit!important;box-sizing:border-box!important;margin:0!important;padding:0!important}
-#e div{min-height:32px!important;height:32px!important;display:block!important;box-sizing:border-box;overflow:hidden;text-align:left!important;background-image:linear-gradient(90deg,#ececec 1px,transparent 1px),linear-gradient(#ececec 1px,transparent 1px)!important;background-size:32px 32px!important;background-repeat:repeat!important;width:100%!important;letter-spacing:0px!important;padding-left:0;margin:0}
-#e div:empty::before,#e br:only-child::before{content:"【空行】";color:#ef4444;font-size:12px;background:#fef2f2;padding:1px 4px;letter-spacing:normal;display:inline-block!important;width:auto!important}
-.zenkaku-space{background-color:#f4f4f5;color:#aaa;display:inline-block!important;width:32px!important;text-align:center}.zenkaku-space::before{content:"▢";font-size:14px}
-.hankaku-space{background-color:#e4e4e7!important;color:#71717a!important;display:inline-block!important;width:32px!important;text-align:center;border-radius:2px}.hankaku-space::before{content:"·";font-size:14px;font-weight:bold}
-.homograph-char{border:2px dashed #f97316!important;background:#ffedd5!important;display:inline-block!important;width:32px!important;text-align:center}
-.proof-error{background-color:#fce7f3!important;border-bottom:2px dotted #db2777!important;display:inline-block!important}
-#t{overflow-y:auto;flex:1;font-size:14px}
-</style></head><body>
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Editor</title><style>
+body{margin:0;display:flex;flex-direction:column;height:100vh;font-family:monospace;overflow:hidden}
+.h{display:flex;gap:6px;padding:8px;background:#fff;border-bottom:1px solid #ddd;height:50px;box-sizing:border-box;align-items:center;flex-shrink:0}
+button{padding:6px 10px;font-size:12px;font-weight:bold;cursor:pointer;background:#f0f0f2;border:1px solid #ccc;border-radius:4px}
+#b{display:flex;flex:1;height:calc(100vh - 50px);overflow:hidden}
+#s{width:200px;background:#f0f0f4;border-right:1px solid #ddd;padding:8px;display:flex;flex-direction:column;gap:4px;flex-shrink:0}
+.m{flex:1;padding:15px;overflow:auto}
+#w{display:flex;background:#fff;border:1px solid #ddd;border-radius:6px;min-height:500px;box-sizing:border-box;overflow:hidden;flex-shrink:0}
+.l{width:40px;border-right:1px solid #eee;padding:20px 0;text-align:right;font-size:14px;color:#aaa;padding-right:6px;user-select:none;flex-shrink:0;box-sizing:border-box;line-height:32px!important}
+#e{flex-grow:1;padding:20px 0;outline:0;white-space:pre-wrap;word-wrap:break-word;display:block!important;box-sizing:border-box;overflow:hidden;font-size:32px!important;line-height:32px!important;letter-spacing:0px!important;text-align:left!important}
+#e div{min-height:32px!important;height:32px!important;display:block!important;box-sizing:border-box;overflow:hidden;text-align:left!important;background-image:linear-gradient(90deg,#ececec 1px,transparent 1px),linear-gradient(#ececec 1px,transparent 1px)!important;background-size:32px 32px!important;background-repeat:repeat!important;width:100%!important;margin:0;padding:0}
+#e span{display:inline-block!important;width:32px!important;text-align:center!important;box-sizing:border-box!important;margin:0!important;padding:0!important}
+.sp{background:#e4e4e7!important;color:#71717a!important;border-radius:2px}
+.hm{border:2px dashed #f97316!important;background:#ffedd5!important}
+.er{background-color:#fce7f3!important;border-bottom:2px dotted #db2777!important}
+#t{overflow-y:auto;flex:1;font-size:13px}
+</style></head>
+<body>
 <div class="h">
 <button onclick="u()">戻</button><button onclick="document.execCommand('undo')">撤</button><button onclick="document.execCommand('redo')">進</button>
-<button onclick="c()">複</button><button onclick="h()">混</button><button onclick="p()">誤</button>
-<select id="l" onchange="z()"></select><span id="k" style="font-size:13px">0字</span>
+<button onclick="c()">複</button><button onclick="fx()" style="background:#e0f2fe;color:#0369a1">修</button>
+<select id="l" onchange="z()"></select><span id="k" style="font-size:13px;margin-left:5px">0字</span>
 </div>
 <div id="b">
 <div id="s">
@@ -30,22 +30,21 @@ body{margin:0;display:flex;flex-direction:column;height:100vh;font-family:monosp
 <script>
 const e=document.getElementById('e'),l=document.getElementById('l'),t=document.getElementById('t'),k=document.getElementById('k'),w=document.getElementById('w'),n=document.getElementById('n');
 let d={r:[]},f=null,pId=null;
-for(let i=20;i<=40;i++)l.innerHTML+=`<option value="${i}">${i}字</option>`;l.value="30";
+for(let i=20; i<=40; i++)l.innerHTML+=`<option value="${i}">${i}字</option>`;l.value="30";
 window.onload=()=>{
     let s=localStorage.getItem('n_d'),sw=localStorage.getItem('n_w'),sc=localStorage.getItem('n_c'),sr=localStorage.getItem('n_r');
     if(s){d=JSON.parse(s)}else{let id='d_'+Date.now();d.r.push({id,type:'file',name:'第1話',content:'<div><br></div>'});f=id}
     if(sc)f=sc;if(sw)l.value=sw;r();o(f);if(sr&&sr!=="<div><br></div>")e.innerHTML=sr;z();v();
 };
-function z(){let v=l.value;if(v==='max'){w.style.width='100%';w.style.setProperty('--g-w','100%')}else{let num=parseInt(v),pw=num*32;w.style.setProperty('--g-w',(pw+45+48)+'px');w.style.width=(pw+45+48)+'px'}localStorage.setItem('n_w',v)}
-function v(){let divs=e.querySelectorAll('#e>div'),c=divs.length===0?1:divs.length,h='';for(let i=1;i<=c;i++)h+=i+'<br>';n.innerHTML=h;k.textContent=e.innerText.replace(/\n/g,'').length+'字'}
+function z(){let v=l.value;if(v==='max'){w.style.width='100%';w.style.setProperty('--g-w','100%')}else{let num=parseInt(v),pw=num*32;w.style.setProperty('--g-w',(pw+40+40)+'px');w.style.width=(pw+40+40)+'px';e.style.width=pw+'px'}localStorage.setItem('n_w',v)}
+function v(){let divs=e.querySelectorAll('#e>div'),c=divs.length===0?1:divs.length,h='';for(let i=1; i<=c; i++)h+=i+'<br>';n.innerHTML=h;k.textContent=e.innerText.replace(/\n/g,'').replace(/·/g,' ').replace(/▢/g,' ').length+'字'}
 function o(id){let i=g(id);if(i){e.innerHTML=i.content;f=id;localStorage.setItem('n_c',id)}z();v()}
 function s(){let i=g(f);if(i){i.content=e.innerHTML;localStorage.setItem('n_d',JSON.stringify(d))}}
 function g(id,items=d.r){for(let i of items){if(i.id===id)return i;if(i.children){let found=g(id,i.children);if(found)return found}}return null}
 function r(){t.innerHTML='';d.r.forEach(i=>t.appendChild(m(i,null)))}
 function m(i,pid){
     let div=document.createElement('div');div.style.paddingLeft='8px';
-    let lbl=document.createElement('div');lbl.textContent=(i.type==='folder'?'📁 ':'📄 ')+i.name;lbl.style.cursor='pointer';lbl.style.padding='4px';
-    if(i.id===f)lbl.style.backgroundColor='#e4e4e7';
+    let lbl=document.createElement('div');lbl.textContent=(i.type==='folder'?'📁 ':'📄 ')+i.name;lbl.style.cursor='pointer';lbl.style.padding='4px';if(i.id===f)lbl.style.backgroundColor='#e4e4e7';
     lbl.onclick=(ev)=>{ev.stopPropagation();if(i.type=='file'){s();o(i.id);r()}else{pId=i.id}};
     lbl.ondblclick=(ev)=>{ev.stopPropagation();let n=prompt('名:',i.name);if(n){i.name=n;s();r()}};
     div.appendChild(lbl);if(i.children)i.children.forEach(ch=>div.appendChild(m(ch,i.id)));return div;
@@ -57,9 +56,33 @@ function a(isF){
     s();if(!isF)f=id;r();o(f);
 }
 function u(){pId=null;alert('最上層')}
-function c(){navigator.clipboard.writeText(e.innerText).then(()=>alert('コピー完了'))}
-function h(){let divs=e.querySelectorAll('#e>div');divs.forEach(d=>{d.innerHTML=d.innerHTML.replace(/([口工二卜]|[^\u0000-\u007F\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u3000-\u303F])/g,'<span class="homograph-char">$1</span>')})}
-function p(){let divs=e.querySelectorAll('#e>div');divs.forEach(d=>{d.innerHTML=d.innerHTML.replace(/(言頭|言までもない)/g,'<span class="proof-error">$1</span>')})}
+
+/* 【修】ボタン：文字入力の邪魔をせず、一瞬であらゆる特殊文字・半角を正方形の箱に閉じ込め一括補正＆校正する最強機能 */
+function fx(){
+    let divs=e.querySelectorAll('#e>div');if(divs.length===0){e.innerHTML='<div>'+e.innerHTML+'</div>';divs=e.querySelectorAll('#e>div')}
+    divs.forEach(d=>{
+        let txt=d.innerText;if(txt==='\n'||txt==='')return;let h='';
+        for(let i=0;i<txt.length;i++){
+            let c=txt[i];
+            if(c===' '){h+=`<span class="sp">·</span>`}
+            else if(c==='　'){h+=`<span class="sp" style="background:#f4f4f5!important;color:#aaa!important">▢</span>`}
+            else if(/[口工二卜]|[^\u0000-\u007F\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u3000-\u303F]/.test(c)){h+=`<span class="hm">${c}</span>`}
+            else if(c==='言'&&txt[i+1]==='頭'){h+=`<span class="er">言</span>`;h+=`<span class="er">頭</span>`;i++}
+            else{h+=`<span>${c}</span>`}
+        }
+        d.innerHTML=h;
+    });
+    alert('✨ 特殊文字の1マス強制ロック、半角スペース色付け、ホモグラフ・誤字の一括チェックが完了しました！');
+    v();s();
+}
+
+/* 複（コピー）ボタン：画面表示用の箱を消して、本物のきれいな文章に戻してクリップボードに送る設定 */
+function c(){
+    let t=e.innerText.replace(/·/g,' ').replace(/▢/g,'　');
+    navigator.clipboard.writeText(t).then(()=>alert('きれいな小説文章をコピーしました！'));
+}
+
 e.oninput=()=>{v();s();localStorage.setItem('n_r',e.innerHTML)};
 e.onkeydown=(ev)=>{if(ev.key==='Enter')setTimeout(v,10)};
 </script></body></html>
+
