@@ -155,44 +155,7 @@ window.onload=()=>{
     norm();cleanSpans();autoFormatEditor();highlightSpaces();z();v();
 };
 function cleanExcessiveBlankLines(){
-    let divs=e.querySelectorAll('#e>div');
-    if(divs.length<=1)return;
-    // 先頭の連続した空行を検出（別の所から入った時に20行以上飛ぶ不具合の自動修正）
-    let firstNonEmptyIdx=-1;
-    for(let idx=0; idx<divs.length; idx++){
-        let txt=divs[idx].innerText.replace(/[\r\n\s\u3000]/g,'');
-        if(txt.length>0 || divs[idx].querySelector('.sub-sup, .hidden-char-badge, .hm-mark, img')){
-            firstNonEmptyIdx=idx;
-            break;
-        }
-    }
-    if(firstNonEmptyIdx>0){
-        for(let i=0; i<firstNonEmptyIdx; i++){
-            divs[i].remove();
-        }
-    }
-    // 末尾の過剰な空行（3行以上の連続空行）も整理
-    divs=e.querySelectorAll('#e>div');
-    let lastIdx=divs.length-1;
-    let trailingEmptyCount=0;
-    while(lastIdx>=0){
-        let txt=divs[lastIdx].innerText.replace(/[\r\n\s\u3000]/g,'');
-        let hasObj=divs[lastIdx].querySelector('.sub-sup, .hidden-char-badge, .hm-mark, img');
-        if(txt.length===0&&!hasObj){
-            trailingEmptyCount++;
-            lastIdx--;
-        }else{
-            break;
-        }
-    }
-    if(trailingEmptyCount>2){
-        for(let i=0; i<trailingEmptyCount-1; i++){
-            let all=e.querySelectorAll('#e>div');
-            if(all.length>1){
-                all[all.length-1].remove();
-            }
-        }
-    }
+    // 空行の勝手な自動削除は行わない（ユーザーが意図して空行や空白マスにカーソルを置いて執筆するのを妨げない）
 }
 function cleanContaminatedSpans(){
     let nonzens = e.querySelectorAll('.sp-nonzen');
@@ -402,7 +365,7 @@ function highlightSpaces(optActiveLine, optActiveOffset){
     }
     
     const regSpace=/([^\S\u3000\r\n]+)/g;
-    let changed=hadCleaned;
+    let changed=false;
     for(let tn of nodes){
         let val=tn.nodeValue;
         if(/[^\S\u3000\r\n]/.test(val)){
@@ -597,6 +560,7 @@ function z(){
     w.style.width=totalW+'px';
     e.style.width=pw+'px';
     localStorage.setItem('n_w',v);
+    ensureGridLines();
 }
 function getEditorPureTextFromElement(el){
     let divs=el.querySelectorAll('#e>div');
@@ -629,16 +593,44 @@ function getEditorPureTextFromHtml(html){
 function countCharsFromLines(lines){
     let totalChars=0;
     let withoutSpaces=0;
-    for(let line of lines){
-        totalChars+=line.length;
-        let noSpace=line.replace(/[\s\u3000]/g,'');
-        withoutSpaces+=noSpace.length;
+    let lastContentIdx = -1;
+    for(let i=0; i<lines.length; i++){
+        let line = lines[i];
+        totalChars += line.length;
+        let noSpace = line.replace(/[\s\u3000]/g,'');
+        withoutSpaces += noSpace.length;
+        if(noSpace.length > 0){
+            lastContentIdx = i;
+        }
     }
     return {
         totalChars,
         withoutSpaces,
-        lines:Math.max(1, lines.length)
+        lines: Math.max(1, lastContentIdx + 1)
     };
+}
+
+function ensureGridLines(){
+    let cs=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--cs'))||32;
+    let mCont=document.querySelector('.m');
+    let mHeight=mCont?mCont.clientHeight:(window.innerHeight||800);
+    let editorHeight=Math.max(e.clientHeight||0, w.clientHeight||0, mHeight*1.6);
+    let targetCount=Math.max(1, Math.floor(editorHeight/cs));
+    
+    let divs=e.querySelectorAll('#e>div');
+    if(divs.length===0){
+        e.innerHTML='<div><br></div>';
+        divs=e.querySelectorAll('#e>div');
+    }
+    if(divs.length < targetCount){
+        let frag=document.createDocumentFragment();
+        for(let i=divs.length; i<targetCount; i++){
+            let nd=document.createElement('div');
+            nd.innerHTML='<br>';
+            frag.appendChild(nd);
+        }
+        e.appendChild(frag);
+    }
 }
 
 function v(){
@@ -653,9 +645,19 @@ function v(){
     let editorHeight=Math.max(e.clientHeight||0, w.clientHeight||0, (window.innerHeight||800)*1.6);
     let visibleGridLines=Math.max(totalLines, Math.floor(editorHeight/cs));
     
+    // 実際に文字または空白マス目がある最終行を判定（黒字と薄いグレーの切り替え）
+    let lastActiveLine = 0;
+    divs.forEach((d, idx)=>{
+        let txt = d.innerText.replace(/[\r\n]/g,'');
+        if(txt.length > 0 || d.querySelector('.sub-sup, .hidden-char-badge, .hm-mark, img')){
+            lastActiveLine = idx + 1;
+        }
+    });
+    if(lastActiveLine === 0) lastActiveLine = 1;
+    
     let h='';
     for(let i=1;i<=visibleGridLines;i++){
-        if(i<=totalLines){
+        if(i<=lastActiveLine){
             h+=i+'<br>';
         }else{
             h+=`<span style="color:#cbd5e1;font-size:10px">${i}</span><br>`;
@@ -667,7 +669,7 @@ function v(){
     let st=countCharsFromLines(pureLines);
     // デフォルト表示はスペースなし（空白除外）文字数をメインに
     k.innerHTML=`<span style="font-weight:bold">${st.withoutSpaces.toLocaleString()}字</span><span style="font-size:10px;color:#64748b;margin-left:4px;font-weight:normal">(空白込${st.totalChars.toLocaleString()})</span>`;
-    k.title=`【文字数カウンター】\n文字数（空白なし・デフォルト）: ${st.withoutSpaces.toLocaleString()}字\n総文字数（空白込み）: ${st.totalChars.toLocaleString()}字\n行数: ${totalLines}行`;
+    k.title=`【文字数カウンター】\n文字数（空白なし・デフォルト）: ${st.withoutSpaces.toLocaleString()}字\n総文字数（空白込み）: ${st.totalChars.toLocaleString()}字\n行数: ${st.lines}行`;
 }
 function o(id){
     let i=g(id);
@@ -1439,6 +1441,9 @@ function c(){
         clone.querySelectorAll('.hidden-char-badge').forEach(s=>s.remove());
         lines.push(clone.innerText.replace(/\r?\n/g,''));
     });
+    while(lines.length > 1 && lines[lines.length - 1].replace(/[\s\u3000]/g, '') === ''){
+        lines.pop();
+    }
     let t=lines.join('\n');
     navigator.clipboard.writeText(t).then(()=>alert('きれいな小説文章をコピーしました！'));
 }
@@ -1517,7 +1522,6 @@ function scheduleFormat(){
 
 e.oninput=()=>{
     cleanContaminatedSpans();
-    cleanExcessiveBlankLines();
     v();
     s();
     localStorage.setItem('n_r',e.innerHTML);
@@ -1720,7 +1724,7 @@ function resetToolOrder(){
 window.addEventListener('scroll',()=>{if(window.scrollY!==0||window.scrollX!==0)window.scrollTo(0,0)});
 e.addEventListener('focus',()=>{setTimeout(()=>{window.scrollTo(0,0);sc()},50)});
 
-/* なんでもないマス目（空行や行末の右側、原稿用紙のどこでも）をクリック・タップした時に、確実にカーソルを表示・配置する */
+/* マス目やエディタ領域をクリック・タップした時のカーソル配置処理 */
 function applyCaretToDiv(targetDiv, targetCol, maxCols){
     if(!targetDiv) return;
     targetCol = Math.min(targetCol, maxCols);
@@ -1732,27 +1736,30 @@ function applyCaretToDiv(targetDiv, targetCol, maxCols){
     if(lineText.length === 0){
         // 空行の場合
         if(targetCol > 0){
-            targetDiv.innerHTML = '　'.repeat(targetCol);
-            let lastNode = targetDiv.lastChild;
-            if(lastNode && lastNode.nodeType === 3){
-                range.setStart(lastNode, lastNode.nodeValue.length);
+            // 指定のマス目（targetCol）まで全角スペースで埋めてカーソルを配置
+            let pad = '　'.repeat(targetCol);
+            targetDiv.innerHTML = pad + '<br>';
+            let tn = targetDiv.firstChild;
+            if(tn && tn.nodeType === 3){
+                range.setStart(tn, targetCol);
             } else {
                 range.selectNodeContents(targetDiv);
                 range.collapse(false);
             }
         } else {
             let br = targetDiv.querySelector('br');
-            if(br){
-                range.setStartBefore(br);
-            } else {
-                range.setStart(targetDiv, 0);
+            if(!br){
+                targetDiv.innerHTML = '<br>';
+                br = targetDiv.querySelector('br');
             }
+            range.setStartBefore(br);
         }
     } else {
-        // 文字がある行の場合
+        // すでに文字がある行の場合
         if(targetCol > lineText.length){
-            // 行末より右の文字がないマス目をクリック：全角スペースで埋めてそのマス目にカーソル配置
-            let pad = '　'.repeat(targetCol - lineText.length);
+            // 行末より右の空きマスをクリック：全角スペースで埋めてそのマス目にカーソル配置
+            let padCount = targetCol - lineText.length;
+            let pad = '　'.repeat(padCount);
             let tn = document.createTextNode(pad);
             let br = targetDiv.querySelector('br');
             if(br){
@@ -1760,10 +1767,9 @@ function applyCaretToDiv(targetDiv, targetCol, maxCols){
             } else {
                 targetDiv.appendChild(tn);
             }
-            range.selectNodeContents(targetDiv);
-            range.collapse(false);
+            range.setStart(tn, padCount);
         } else {
-            // 文字の存在するマス目をクリック
+            // 文字の存在するマス目をクリック：その文字の位置へ
             setCaretCharOffset(targetDiv, targetCol);
             return;
         }
@@ -1773,62 +1779,95 @@ function applyCaretToDiv(targetDiv, targetCol, maxCols){
     sel.addRange(range);
 }
 
+let lastHandleTime = 0;
+let lastTouchPos = null;
+let touchMoved = false;
+
+window.addEventListener('touchstart', (ev)=>{
+    if(ev.touches && ev.touches.length === 1){
+        lastTouchPos = {
+            x: ev.touches[0].clientX,
+            y: ev.touches[0].clientY,
+            time: Date.now()
+        };
+        touchMoved = false;
+    }
+}, {passive:true});
+
+window.addEventListener('touchmove', (ev)=>{
+    if(lastTouchPos && ev.touches && ev.touches.length === 1){
+        let dx = Math.abs(ev.touches[0].clientX - lastTouchPos.x);
+        let dy = Math.abs(ev.touches[0].clientY - lastTouchPos.y);
+        if(dx > 8 || dy > 8){
+            touchMoved = true;
+        }
+    }
+}, {passive:true});
+
 function handleCellClick(ev){
     if(ev.target.closest('#s')||ev.target.closest('.h')||ev.target.closest('#itemModal')||ev.target.closest('#repBar')||ev.target.closest('.modal-overlay')) return;
     
-    // エディタに確実にフォーカスをあてる（iOSやモバイルでカーソル点滅とキーボード起動を確実に保証）
-    e.focus();
+    // スクロール中の誤作動防止
+    if(touchMoved && (Date.now() - (lastTouchPos?.time || 0) < 400)) return;
     
-    let rect=e.getBoundingClientRect();
-    let cs=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--cs'))||32;
-    let maxCols=parseInt(l.value)||20;
-    let padLeft=cs*0.11;
-    let clickY=ev.clientY-rect.top;
-    let clickX=ev.clientX-rect.left-padLeft;
+    let now = Date.now();
+    if(now - lastHandleTime < 100) return;
+    lastHandleTime = now;
     
-    let divs=e.querySelectorAll('#e>div');
-    if(divs.length===0) divs=e.querySelectorAll('div');
-    if(divs.length===0) return;
+    // 座標の取得（タッチまたはクリック）
+    let clientX = ev.clientX;
+    let clientY = ev.clientY;
+    if((clientX === undefined || clientX === 0) && lastTouchPos){
+        clientX = lastTouchPos.x;
+        clientY = lastTouchPos.y;
+    }
+    if(clientX === undefined || clientY === undefined) return;
+    
+    let rect = e.getBoundingClientRect();
+    let cs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--cs')) || 32;
+    let maxCols = parseInt(l.value) || 30;
+    let padLeft = cs * 0.11;
+    let clickX = clientX - rect.left - padLeft;
+    let clickY = clientY - rect.top;
+    
+    let divs = e.querySelectorAll('#e>div');
+    if(divs.length === 0){
+        e.innerHTML = '<div><br></div>';
+        divs = e.querySelectorAll('#e>div');
+    }
     
     // 1. 本文より上をクリックした場合：1行目の先頭に合わせる
-    if(clickY<0){
-        let firstDiv=divs[0];
+    if(clickY < 0){
+        let firstDiv = divs[0];
         if(firstDiv){
-            setTimeout(()=>{
-                applyCaretToDiv(firstDiv, 0, maxCols);
-            }, 10);
+            e.focus();
+            applyCaretToDiv(firstDiv, 0, maxCols);
         }
         return;
     }
     
-    let targetRow=Math.max(0,Math.floor(clickY/cs));
-    let targetCol=Math.max(0,Math.floor(clickX/cs));
-    targetCol=Math.min(targetCol, maxCols);
+    let targetRow = Math.max(0, Math.floor(clickY / cs));
+    let targetCol = Math.max(0, Math.floor(clickX / cs));
+    targetCol = Math.min(targetCol, maxCols);
     
-    // 2. 本文より下をクリックした場合：空行を追加して、クリックした行のマス目にカーソルを合わせる
-    if(targetRow>=divs.length){
-        let safeMaxRow=Math.min(targetRow, divs.length + 30);
-        while(divs.length<=safeMaxRow){
-            let nd=document.createElement('div');
-            nd.innerHTML='<br>';
-            e.appendChild(nd);
-            divs=e.querySelectorAll('#e>div');
+    // 2. 目的の行が存在しない場合、そこまでの空行をDOMに同期生成する
+    if(targetRow >= divs.length){
+        let frag = document.createDocumentFragment();
+        for(let i = divs.length; i <= targetRow; i++){
+            let nd = document.createElement('div');
+            nd.innerHTML = '<br>';
+            frag.appendChild(nd);
         }
+        e.appendChild(frag);
+        divs = e.querySelectorAll('#e>div');
+    }
+    
+    let targetDiv = divs[targetRow];
+    if(targetDiv){
+        e.focus();
+        applyCaretToDiv(targetDiv, targetCol, maxCols);
         v();
         s();
-        let targetDiv=divs[safeMaxRow];
-        setTimeout(()=>{
-            applyCaretToDiv(targetDiv, targetCol, maxCols);
-        }, 10);
-        return;
-    }
-    
-    // 3. 既存の行をクリックした場合
-    let targetDiv=divs[targetRow];
-    if(targetDiv){
-        setTimeout(()=>{
-            applyCaretToDiv(targetDiv, targetCol, maxCols);
-        }, 10);
     }
 }
 e.addEventListener('mousedown',()=>{ if(document.activeElement !== e) e.focus(); });
@@ -1845,6 +1884,10 @@ if(mContainer){
             handleCellClick(ev);
         }
     });
+    mContainer.addEventListener('scroll',()=>{
+        ensureGridLines();
+        v();
+    },{passive:true});
 }
 if(window.visualViewport){
     window.visualViewport.addEventListener('resize',()=>{window.scrollTo(0,0)});
