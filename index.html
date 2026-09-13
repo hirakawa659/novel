@@ -1,15 +1,16 @@
-<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><title>Editor</title><style>
-body{margin:0;display:flex;flex-direction:column;height:100vh;font-family:monospace;overflow:hidden}
-.h{display:flex;gap:6px;padding:8px;background:#fff;border-bottom:1px solid #ddd;height:50px;box-sizing:border-box;align-items:center;flex-shrink:0}
+<!DOCTYPE html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>Editor</title><style>
+:root{--cs:32px}
+html,body{margin:0;padding:0;width:100%;height:100%;height:100dvh;overflow:hidden;position:fixed;top:0;left:0;right:0;bottom:0;font-family:monospace}
+.h{position:fixed;top:0;left:0;right:0;width:100%;display:flex;gap:6px;padding:8px;background:#fff;border-bottom:1px solid #ddd;height:50px;box-sizing:border-box;align-items:center;z-index:999;flex-shrink:0}
 button{padding:6px 10px;font-size:12px;font-weight:bold;cursor:pointer;background:#f0f0f2;border:1px solid #ccc;border-radius:4px}
-#b{display:flex;flex:1;height:calc(100vh - 50px);overflow:hidden}
+#b{display:flex;position:fixed;top:50px;bottom:0;left:0;right:0;width:100%;height:calc(100% - 50px);height:calc(100dvh - 50px);overflow:hidden}
 #s{width:200px;background:#f0f0f4;border-right:1px solid #ddd;padding:8px;display:flex;flex-direction:column;gap:4px;flex-shrink:0}
-.m{flex:1;padding:15px;overflow:auto}
-#w{display:flex;background:#fff;border:1px solid #ddd;border-radius:6px;min-height:500px;box-sizing:border-box;overflow:hidden;flex-shrink:0}
-.l{width:40px;border-right:1px solid #eee;padding:20px 0;text-align:right;font-size:14px;color:#aaa;padding-right:6px;user-select:none;flex-shrink:0;box-sizing:border-box;line-height:32px!important}
-#e{flex-grow:1;padding:20px 0;outline:0;white-space:pre-wrap;word-wrap:break-word;display:block!important;box-sizing:border-box;overflow:hidden;font-size:32px!important;line-height:32px!important;letter-spacing:0px!important;text-align:left!important}
-#e div{min-height:32px!important;height:32px!important;display:block!important;box-sizing:border-box;overflow:hidden;text-align:left!important;background-image:linear-gradient(90deg,#ececec 1px,transparent 1px),linear-gradient(#ececec 1px,transparent 1px)!important;background-size:32px 32px!important;background-repeat:repeat!important;width:100%!important;margin:0;padding:0}
-#e span{display:inline-block!important;width:32px!important;text-align:center!important;box-sizing:border-box!important;margin:0!important;padding:0!important}
+.m{flex:1;padding:12px;overflow-y:auto;overflow-x:hidden;box-sizing:border-box;display:flex;justify-content:center}
+#w{display:flex;background:#fff;border:1px solid #ddd;border-radius:6px;min-height:500px;box-sizing:border-box;overflow:hidden;flex-shrink:0;margin:0 auto}
+.l{width:36px;border-right:1px solid #eee;padding:12px 0;text-align:right;font-size:12px;color:#aaa;padding-right:6px;user-select:none;flex-shrink:0;box-sizing:border-box;line-height:var(--cs)!important}
+#e{flex-grow:1;padding:12px 0;outline:0;white-space:pre-wrap;word-wrap:break-word;word-break:break-all;display:block!important;box-sizing:border-box;overflow:hidden;font-size:var(--cs)!important;line-height:var(--cs)!important;letter-spacing:0px!important;text-align:left!important;background-image:linear-gradient(90deg,#ececec 1px,transparent 1px),linear-gradient(#ececec 1px,transparent 1px)!important;background-size:var(--cs) var(--cs)!important;background-repeat:repeat!important;background-position:0 12px!important}
+#e div{min-height:var(--cs)!important;height:var(--cs)!important;display:block!important;box-sizing:border-box;overflow:hidden;text-align:left!important;background-image:linear-gradient(90deg,#ececec 1px,transparent 1px),linear-gradient(#ececec 1px,transparent 1px)!important;background-size:var(--cs) var(--cs)!important;background-repeat:repeat!important;width:100%!important;margin:0;padding:0}
+#e span{display:inline-block!important;width:var(--cs)!important;height:var(--cs)!important;line-height:var(--cs)!important;text-align:center!important;box-sizing:border-box!important;margin:0!important;padding:0!important;font-size:calc(var(--cs)*0.8)!important}
 .sp{background:#e4e4e7!important;color:#71717a!important;border-radius:2px}
 .hm{border:2px dashed #f97316!important;background:#ffedd5!important}
 .er{background-color:#fce7f3!important;border-bottom:2px dotted #db2777!important}
@@ -32,13 +33,49 @@ const e=document.getElementById('e'),l=document.getElementById('l'),t=document.g
 let d={r:[]},f=null,pId=null;
 for(let i=20; i<=40; i++)l.innerHTML+=`<option value="${i}">${i}字</option>`;l.value="30";
 window.onload=()=>{
+    try{document.execCommand('defaultParagraphSeparator', false, 'div');}catch(err){}
     let s=localStorage.getItem('n_d'),sw=localStorage.getItem('n_w'),sc=localStorage.getItem('n_c'),sr=localStorage.getItem('n_r');
     if(s){d=JSON.parse(s)}else{let id='d_'+Date.now();d.r.push({id,type:'file',name:'第1話',content:'<div><br></div>'});f=id}
-    if(sc)f=sc;if(sw)l.value=sw;r();o(f);if(sr&&sr!=="<div><br></div>")e.innerHTML=sr;z();v();
+    if(sc)f=sc;if(sw)l.value=sw;r();o(f);if(sr&&sr!=="<div><br></div>")e.innerHTML=sr;
+    norm();z();v();
 };
-function z(){let v=l.value;if(v==='max'){w.style.width='100%';w.style.setProperty('--g-w','100%')}else{let num=parseInt(v),pw=num*32;w.style.setProperty('--g-w',(pw+40+40)+'px');w.style.width=(pw+40+40)+'px';e.style.width=pw+'px'}localStorage.setItem('n_w',v)}
-function v(){let divs=e.querySelectorAll('#e>div'),c=divs.length===0?1:divs.length,h='';for(let i=1; i<=c; i++)h+=i+'<br>';n.innerHTML=h;k.textContent=e.innerText.replace(/\n/g,'').replace(/·/g,' ').replace(/▢/g,' ').length+'字'}
-function o(id){let i=g(id);if(i){e.innerHTML=i.content;f=id;localStorage.setItem('n_c',id)}z();v()}
+function norm(){
+    if(!e.innerHTML.trim()){e.innerHTML='<div><br></div>';return}
+    let hasRawText=false;
+    for(let n of e.childNodes){
+        if(n.nodeType===3 && n.nodeValue.trim()){hasRawText=true;break}
+        if(n.nodeType===1 && n.tagName!=='DIV'){hasRawText=true;break}
+    }
+    if(hasRawText){
+        let lines=e.innerText.split('\n');
+        e.innerHTML=lines.map(l=>`<div>${l?l:'<br>'}</div>`).join('');
+    }
+}
+function z(){
+    let v=l.value;let num=parseInt(v);if(!num||isNaN(num))num=30;
+    const m=document.querySelector('.m');
+    const mWidth=m?m.clientWidth:(window.innerWidth-200);
+    const pad=24,lw=36,border=2;
+    let avail=mWidth-pad-lw-border;
+    if(avail<100)avail=100;
+    let cs=Math.floor(avail/num);
+    if(cs<12)cs=12;if(cs>64)cs=64;
+    const pw=cs*num;
+    const totalW=pw+lw+border;
+    document.documentElement.style.setProperty('--cs',cs+'px');
+    w.style.width=totalW+'px';
+    e.style.width=pw+'px';
+    localStorage.setItem('n_w',v);
+}
+function v(){
+    let divs=e.querySelectorAll('#e>div');
+    let c=divs.length;
+    if(c===0){let lines=e.innerText.split('\n').filter(Boolean);c=lines.length>0?lines.length:1}
+    let h='';for(let i=1; i<=c; i++)h+=i+'<br>';
+    n.innerHTML=h;
+    k.textContent=e.innerText.replace(/\n/g,'').replace(/·/g,' ').replace(/▢/g,' ').length+'字'
+}
+function o(id){let i=g(id);if(i){e.innerHTML=(i.content&&i.content.trim())?i.content:'<div><br></div>';f=id;localStorage.setItem('n_c',id)}norm();z();v()}
 function s(){let i=g(f);if(i){i.content=e.innerHTML;localStorage.setItem('n_d',JSON.stringify(d))}}
 function g(id,items=d.r){for(let i of items){if(i.id===id)return i;if(i.children){let found=g(id,i.children);if(found)return found}}return null}
 function r(){t.innerHTML='';d.r.forEach(i=>t.appendChild(m(i,null)))}
@@ -59,6 +96,7 @@ function u(){pId=null;alert('最上層')}
 
 /* 【修】ボタン：文字入力の邪魔をせず、一瞬であらゆる特殊文字・半角を正方形の箱に閉じ込め一括補正＆校正する最強機能 */
 function fx(){
+    norm();
     let divs=e.querySelectorAll('#e>div');if(divs.length===0){e.innerHTML='<div>'+e.innerHTML+'</div>';divs=e.querySelectorAll('#e>div')}
     divs.forEach(d=>{
         let txt=d.innerText;if(txt==='\n'||txt==='')return;let h='';
@@ -84,5 +122,15 @@ function c(){
 
 e.oninput=()=>{v();s();localStorage.setItem('n_r',e.innerHTML)};
 e.onkeydown=(ev)=>{if(ev.key==='Enter')setTimeout(v,10)};
+window.addEventListener('scroll',()=>{if(window.scrollY!==0||window.scrollX!==0)window.scrollTo(0,0)});
+e.addEventListener('focus',()=>{setTimeout(()=>window.scrollTo(0,0),50)});
+if(window.visualViewport){
+    window.visualViewport.addEventListener('resize',()=>{window.scrollTo(0,0)});
+    window.visualViewport.addEventListener('scroll',()=>{window.scrollTo(0,0)});
+}
+window.addEventListener('resize',()=>{z();window.scrollTo(0,0)});
+if(window.ResizeObserver){
+    new ResizeObserver(()=>{z()}).observe(document.querySelector('.m'));
+}
 </script></body></html>
 
