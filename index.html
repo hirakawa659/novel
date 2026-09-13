@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>エディタ</title>
+    <style>
+        body { 
+            font-family: 'Helvetica Neue', Arial, 'Hiragino Kaku Gothic ProN', Meiryo, sans-serif; 
+            background: #fafafa; 
+            margin: 0; 
+            padding: 0; 
+            color: #2d2d30; 
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+        }
+        .sidebar {
+            width: 250px;
+            background: #f0f0f4;
+            border-right: 1px solid #e5e5e5;
+            display: flex;
+            flex-direction: column;
+            padding: 15px;
+            box-sizing: border-box;
+            flex-shrink: 0;
+        }
+        .sidebar-header {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 15px;
+            width: 100%;
+        }
+        .sidebar-btn {
+            padding: 4px 8px;
+            font-size: 12px;
+            cursor: pointer;
+            background: #ffffff;
+            border: 1px solid #dcdcdc;
+            border-radius: 4px;
+            flex: 1;
+        }
+        .tree-root {
+            overflow-y: auto;
+            flex-grow: 1;
+            width: 100%;
+        }
+        .tree-item {
+            margin-left: 15px;
+            user-select: none;
+        }
+        .item-label {
+            padding: 4px 6px;
+            cursor: pointer;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 14px;
+        }
+        .item-label:hover { background: #e4e4e7; }
+        .item-label.active { background: #e4e4e7; font-weight: bold; }
+        .main-content {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            background: #fafafa;
+        }
+        .controls { 
+            display: flex; 
+            gap: 12px; 
+            background: #ffffff; 
+            padding: 10px 20px; 
+            border-bottom: 1px solid #e5e5e5; 
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        button { padding: 6px 12px; font-size: 13px; font-weight: bold; cursor: pointer; background: #f0f0f2; color: #333; border: 1px solid #dcdcdc; border-radius: 6px; }
+        button:hover { background: #e4e4e7; }
+        .select-wrapper { display: flex; align-items: center; gap: 5px; font-size: 13px; color: #55555a; }
+        select { padding: 4px 8px; font-size: 13px; border-radius: 6px; border: 1px solid #dcdcdc; background: #ffffff; outline: none; }
+        .status { margin-left: auto; font-size: 13px; color: #88888f; }
+        .counter { font-size: 13px; color: #55555a; margin-right: 15px; }
+        .editor-container {
+            flex-grow: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            justify-content: flex-start;
+        }
+        .editor-wrapper {
+            display: flex;
+            background: #ffffff;
+            border: 1px solid #e5e5e5;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            min-height: 600px;
+            height: max-content;
+            width: 100%;
+            box-sizing: border-box;
+            overflow: hidden;
+        }
+        .line-numbers {
+            width: 45px;
+            background: #fcfcfc;
+            border-right: 1px solid #ececec;
+            padding: 24px 0;
+            text-align: right;
+            font-size: 18px;
+            line-height: 2;
+            color: #a1a1aa;
+            user-select: none;
+            box-sizing: border-box;
+            padding-right: 8px;
+            font-family: monospace;
+        }
+        #editor {
+            flex-grow: 1;
+            padding: 24px;
+            font-size: 18px;
+            line-height: 2;
+            letter-spacing: 0.08em;
+            outline: none;
+            background-image: 
+                linear-gradient(to right, #ececec 1px, transparent 1px),
+                linear-gradient(to bottom, #ececec 1px, transparent 1px);
+            background-size: 1.08em 2em;
+            box-sizing: border-box;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+        #editor div:empty::before, #editor br:only-child::before {
+            content: "【空行】";
+            color: #ef4444;
+            font-size: 12px;
+            background: #fef2f2;
+            padding: 1px 4px;
+            border-radius: 4px;
+            letter-spacing: normal;
+            border: 1px solid #fee2e2;
+        }
+        .zenkaku-space {
+            background-color: #f4f4f5;
+            color: #a1a1aa;
+            display: inline-block;
+            width: 1em;
+            text-align: center;
+            border-radius: 2px;
+        }
+        .zenkaku-space::before { content: "▢"; font-size: 14px; }
+        .hankaku-space {
+            background-color: #f4f4f5;
+            color: #b1b1ba;
+            display: inline-block;
+            width: 0.5em;
+            text-align: center;
+            border-radius: 1px;
+        }
+        .hankaku-space::before { content: "·"; font-size: 14px; font-weight: bold; }
+    </style>
+</head>
+<body>
+<div class="sidebar">
+    <div class="sidebar-header">
+        <button class="sidebar-btn" onclick="addFolder()">+ フォルダ</button>
+        <button class="sidebar-btn" onclick="addFile()">+ 新しい話</button>
+    </div>
+    <div class="tree-root" id="treeRoot"></div>
+</div>
+<div class="main-content">
+    <div class="controls">
+        <button onclick="document.execCommand('undo')">戻る</button>
+        <button onclick="document.execCommand('redo')">進む</button>
+        <button onclick="executeCut()">カット</button>
+        <button onclick="copyText()">コピー</button>
+        <div class="select-wrapper">
+            <label for="widthSelect">1行の文字数:</label>
+            <select id="widthSelect" onchange="changeWidth()">
+                <option value="max">画面いっぱい</option>
+                <option value="30">30文字</option>
+                <option value="40" selected>40文字</option>
+                <option value="50">50文字</option>
+                <option value="60">60文字</option>
+            </select>
+        </div>
+        <div class="counter"><span id="charCount">0</span> 文字</div>
+        <span class="status" id="saveStatus">保存完了</span>
+    </div>
+    <div class="editor-container">
+        <div class="editor-wrapper" id="editorWrapper">
+            <div class="line-numbers" id="lineNumbers">1</div>
+            <div id="editor" contenteditable="true"><div><br></div></div>
+        </div>
+    </div>
+</div>
+<script>
+  const editor = document.getElementById('editor');
+const lineNumbers = document.getElementById('lineNumbers');
+const charCount = document.getElementById('charCount');
+const saveStatus = document.getElementById('saveStatus');
+const widthSelect = document.getElementById('widthSelect');
+const treeRoot = document.getElementById('treeRoot');
+const editorWrapper = document.getElementById('editorWrapper');
+
+let fsData = { root: [] };
+let currentFileId = null;
+
+window.addEventListener('DOMContentLoaded', () => {
+    const savedFs = localStorage.getItem('novel_fs_data');
+    const savedWidth = localStorage.getItem('novel_width');
+    const savedCurrent = localStorage.getItem('novel_current_id');
+    
+    if (savedFs) {
+        fsData = JSON.parse(savedFs);
+    } else {
+        const defaultFolderId = 'f_' + Date.now();
+        const defaultFileId = 'doc_' + Date.now();
+        fsData.root.push({
+            id: defaultFolderId, type: 'folder', name: '作品フォルダ', children: [
+                { id: defaultFileId, type: 'file', name: '第1話', content: '<div><br></div>' }
+            ]
+        });
+        currentFileId = defaultFileId;
+    }
+    
+    if (savedCurrent) currentFileId = savedCurrent;
+    if (savedWidth) widthSelect.value = savedWidth;
+    
+    renderTree();
+    loadFile(currentFileId);
+    changeWidth();
+    updateLines();
+});
+
+function updateLines() {
+    const text = editor.innerText;
+    const lines = editor.getElementsByTagName('div');
+    let lineCount = lines.length;
+    if (lineCount === 0) lineCount = 1;
+    
+    let numsHtml = '';
+    for(let i = 1; i <= lineCount; i++) {
+        numsHtml += i + '<br>';
+    }
+    lineNumbers.innerHTML = numsHtml;
+    charCount.textContent = text.replace(/\n/g, '').length;
+}
+
+function changeWidth() {
+    const val = widthSelect.value;
+    localStorage.setItem('novel_width', val);
+    
+    if (val === 'max') {
+        editorWrapper.style.width = '100%';
+    } else {
+        const charWidth = 18 + 1.44;
+        const totalWidth = (charWidth * parseInt(val)) + 48 + 45; 
+        editorWrapper.style.width = totalWidth + 'px';
+    }
+}
+
+function executeCut() {
+    document.execCommand('cut');
+}
+
+function copyText() {
+    const text = editor.innerText;
+    navigator.clipboard.writeText(text).then(() => {
+        alert('コピーしました');
+    }).catch(err => {
+        alert('コピー失敗: ' + err);
+    });
+}
+
+function renderTree() {
+    treeRoot.innerHTML = '';
+    fsData.root.forEach(item => {
+        treeRoot.appendChild(createTreeElement(item));
+    });
+}
+
+function createTreeElement(item) {
+    const div = document.createElement('div');
+    div.className = 'tree-item';
+    
+    const label = document.createElement('div');
+    label.className = 'item-label';
+    if (item.id === currentFileId) label.classList.add('active');
+    
+    label.textContent = (item.type === 'folder' ? '📁 ' : '📄 ') + item.name;
+    
+    label.addEventListener('click', () => {
+        if (item.type === 'file') {
+            saveCurrentFile();
+            currentFileId = item.id;
+            localStorage.setItem('novel_current_id', currentFileId);
+            loadFile(currentFileId);
+            renderTree();
+        }
+    });
+    
+    label.addEventListener('dblclick', () => {
+        const newName = prompt('名前を変更します:', item.name);
+        if (newName) {
+            item.name = newName;
+            saveFS();
+            renderTree();
+        }
+    });
+
+    div.appendChild(label);
+    
+    if (item.type === 'folder' && item.children) {
+        const childContainer = document.createElement('div');
+        item.children.forEach(child => {
+            childContainer.appendChild(createTreeElement(child));
+        });
+        div.appendChild(childContainer);
+    }
+    
+    return div;
+}
+
+function addFolder() {
+    const name = prompt('フォルダ名を入力してください:', '新しいフォルダ');
+    if (!name) return;
+    fsData.root.push({ id: 'f_' + Date.now(), type: 'folder', name: name, children: [] });
+    saveFS();
+    renderTree();
+}
+
+function addFile() {
+    const name = prompt('話の名前を入力してください:', '新しい話');
+    if (!name) return;
+    const newId = 'doc_' + Date.now();
+    
+    if (fsData.root.length > 0 && fsData.root[0].type === 'folder') {
+        fsData.root[0].children.push({ id: newId, type: 'file', name: name, content: '<div><br></div>' });
+    } else {
+        fsData.root.push({ id: newId, type: 'file', name: name, content: '<div><br></div>' });
+    }
+    
+    saveFS();
+    currentFileId = newId;
+    localStorage.setItem('novel_current_id', currentFileId);
+    loadFile(newId);
+    renderTree();
+}
+
+function findFile(id, items = fsData.root) {
+    for (let item of items) {
+        if (item.id === id) return item;
+        if (item.children) {
+            const found = findFile(id, item.children);
+            if (found) return found;
+        }
+    }
+    return null;
+}
+
+function loadFile(id) {
+    const file = findFile(id);
+    if (file) {
+        editor.innerHTML = file.content;
+    } else {
+        editor.innerHTML = '<div><br></div>';
+    }
+    updateLines();
+}
+
+function saveCurrentFile() {
+    const file = findFile(currentFileId);
+    if (file) {
+        file.content = editor.innerHTML;
+        saveFS();
+    }
+}
+
+function saveFS() {
+    localStorage.setItem('novel_fs_data', JSON.stringify(fsData));
+}
+
+editor.addEventListener('input', () => {
+    updateLines();
+    saveCurrentFile();
+    saveStatus.textContent = "保存完了";
+    saveStatus.style.color = "#10b981";
+});
+</script>
+</body>
+</html>
+
