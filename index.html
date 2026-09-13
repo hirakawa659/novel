@@ -1,15 +1,13 @@
 <!DOCTYPE html>
 <html lang="ja">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>エディタ</title>
+    <meta charset="UTF-8"><title>エディタ</title>
     <style>
         body { font-family: monospace; background: #fafafa; margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; }
-        #sidebar { width: 220px; background: #f0f0f4; border-right: 1px solid #ddd; display: flex; flex-direction: column; padding: 10px; }
+        #sidebar { width: 220px; background: #f0f0f4; border-right: 1px solid #ddd; display: flex; flex-direction: column; padding: 10px; flex-shrink: 0; }
         .sidebar-btn { padding: 5px; font-size: 12px; cursor: pointer; margin-bottom: 5px; width: 100%; }
-        #treeRoot { overflow-y: auto; flex-grow: 1; font-size: 14px; }
-        .item-label { padding: 4px; border-radius: 4px; cursor: pointer; }
+        #treeRoot { overflow-y: auto; flex-grow: 1; font-size: 14px; cursor: pointer; }
+        .item-label { padding: 4px; border-radius: 4px; }
         .item-label.active { background: #e4e4e7; font-weight: bold; }
         .main-content { flex-grow: 1; display: flex; flex-direction: column; height: 100vh; }
         .controls { display: flex; gap: 8px; background: #fff; padding: 10px; border-bottom: 1px solid #ddd; align-items: center; flex-wrap: wrap; }
@@ -18,10 +16,11 @@
         .counter { font-size: 13px; margin-right: 10px; }
         .editor-container { flex-grow: 1; padding: 15px; overflow-y: auto; }
         .editor-wrapper { display: flex; background: #fff; border: 1px solid #ddd; border-radius: 6px; min-height: 500px; width: max-content; }
-        .line-numbers { width: 40px; border-right: 1px solid #eee; padding: 20px 0; text-align: right; font-size: 20px; line-height: 40px; color: #aaa; padding-right: 5px; user-select: none; }
-        
-        #editor { padding: 20px; font-size: 20px; line-height: 40px; outline: none; white-space: pre-wrap; word-wrap: break-word; display: block; }
-        #editor div { min-height: 40px; height: 40px; display: block; box-sizing: border-box; background-image: linear-gradient(to right, #ececec 1px, transparent 1px), linear-gradient(to bottom, #ececec 1px, transparent 1px); background-size: 40px 40px; background-repeat: repeat; width: 100%; letter-spacing: 20px; padding-left: 10px; }
+        .line-numbers { width: 40px; border-right: 1px solid #eee; padding: 24px 0; text-align: right; font-size: 20px; line-height: 40px; color: #aaa; padding-right: 5px; user-select: none; }
+        #editor { padding: 24px; font-size: 20px; line-height: 40px; outline: none; white-space: pre-wrap; word-wrap: break-word; display: block; }
+        #editor div { min-height: 40px; height: 40px; display: block; box-sizing: border-box;
+            background-image: linear-gradient(to right, #ececec 1px, transparent 1px), linear-gradient(to bottom, #ececec 1px, transparent 1px);
+            background-size: 40px 40px; background-repeat: repeat; width: 100%; letter-spacing: 20px; padding-left: 10px; }
         #editor div:empty::before, #editor br:only-child::before { content: "【空行】"; color: #ef4444; font-size: 12px; background: #fef2f2; padding: 1px 4px; letter-spacing: normal; }
         .zenkaku-space { background-color: #f4f4f5; color: #aaa; display: inline-block; width: 40px; text-align: center; letter-spacing: normal; }
         .zenkaku-space::before { content: "▢"; font-size: 14px; }
@@ -59,16 +58,12 @@
         <div id="proofPanel"><b style="color:#db2777;">🔍 指摘一覧</b><div id="proofList"></div></div>
     </div>
 </div>
-<!-- ここで外のファイルを読み込みます -->
-<script src="script.js"></script>
-</body>
-</html>
+<script>
 const editor = document.getElementById('editor'), lineNumbers = document.getElementById('lineNumbers'), charCount = document.getElementById('charCount');
 const widthSelect = document.getElementById('widthSelect'), treeRoot = document.getElementById('treeRoot'), editorWrapper = document.getElementById('editorWrapper');
 const sidebar = document.getElementById('sidebar'), mainMenuBtn = document.getElementById('mainMenuBtn'), proofPanel = document.getElementById('proofPanel'), proofList = document.getElementById('proofList');
 let fsData = { root: [] }, currentFileId = null, currentParentFolderId = null;
-
-window.addEventListener('DOMContentLoaded', () => {
+    window.addEventListener('DOMContentLoaded', () => {
     const savedFs = localStorage.getItem('novel_fs_data'), savedWidth = localStorage.getItem('novel_width'), savedCurrent = localStorage.getItem('novel_current_id');
     if (savedFs) { fsData = JSON.parse(savedFs); } else {
         const fid = 'f_' + Date.now(), docid = 'd_' + Date.now();
@@ -78,87 +73,26 @@ window.addEventListener('DOMContentLoaded', () => {
     if (savedCurrent) currentFileId = savedCurrent; if (savedWidth) widthSelect.value = savedWidth;
     renderTree(); loadFile(currentFileId); changeWidth(); updateLines();
 });
-function toggleSidebar() {
-    if (sidebar.style.display === 'none') { sidebar.style.display = 'flex'; mainMenuBtn.style.display = 'none'; } 
-    else { sidebar.style.display = 'none'; mainMenuBtn.style.display = 'block'; }
-}
-function updateLines() {
-    const divs = editor.querySelectorAll('#editor > div'); let count = divs.length === 0 ? 1 : divs.length, html = '';
-    for(let i=1; i<=count; i++) { html += i + '<br>'; } lineNumbers.innerHTML = html;
-    charCount.textContent = editor.innerText.replace(/\n/g, '').length;
-}
-function changeWidth() {
-    const val = widthSelect.value, divs = editor.querySelectorAll('#editor > div');
-    if (val === 'max') { editorWrapper.style.width = '100%'; editor.style.width = '100%'; divs.forEach(d => d.style.width = '100%'); } 
-    else { const num = parseInt(val); editor.style.width = (num * 40 + 40) + 'px'; editorWrapper.style.width = 'max-content'; divs.forEach(d => d.style.width = (num * 40) + 'px'); }
-}
-function goToParentFolder() {
-    if (currentParentFolderId) { const p = findItem(currentParentFolderId); if (p) alert('「' + p.name + '」に戻りました'); } else { alert('最上層です'); }
-}
+function toggleSidebar() { if (sidebar.style.display === 'none') { sidebar.style.display = 'flex'; mainMenuBtn.style.display = 'none'; } else { sidebar.style.display = 'none'; mainMenuBtn.style.display = 'block'; } }
+function updateLines() { const divs = editor.querySelectorAll('#editor > div'); let count = divs.length === 0 ? 1 : divs.length, html = ''; for(let i=1; i<=count; i++) { html += i + '<br>'; } lineNumbers.innerHTML = html; charCount.textContent = editor.innerText.replace(/\n/g, '').length; }
+function changeWidth() { const val = widthSelect.value, divs = editor.querySelectorAll('#editor > div'); if (val === 'max') { editorWrapper.style.width = '100%'; editor.style.width = '100%'; divs.forEach(d => d.style.width = '100%'); } else { const num = parseInt(val); editor.style.width = (num * 40 + 40) + 'px'; editorWrapper.style.width = 'max-content'; divs.forEach(d => d.style.width = (num * 40) + 'px'); } }
+function goToParentFolder() { if (currentParentFolderId) { const p = findItem(currentParentFolderId); if (p) alert('「' + p.name + '」に戻りました'); } else { alert('最上層です'); } }
 function copyText() { clearStyle(); navigator.clipboard.writeText(editor.innerText).then(() => alert('コピーしました')); }
-function clearStyle() {
-    proofPanel.style.display = 'none'; const temp = document.createElement('div'); temp.innerHTML = editor.innerHTML;
-    temp.querySelectorAll('.hidden-char, .homograph-char, .proof-error').forEach(s => { const p = s.parentNode; while (s.firstChild) { p.insertBefore(s.firstChild, s); } p.removeChild(s); });
-    editor.innerHTML = temp.innerHTML;
-}
-function checkHiddenChars() {
-    clearStyle(); let u = false; editor.querySelectorAll('#editor > div').forEach(d => {
-        let t = d.innerHTML; const r = /([\u200B-\u200D\uFEFF\u0000-\u0008\u000B\u000C\u000E-\u001F])/g;
-        if (r.test(t)) { d.innerHTML = t.replace(r, '<span class="hidden-char">$1</span>'); u = true; }
-    }); alert(u ? '⚠️隠し文字検出' : 'クリーンです');
-}
-function checkHomographs() {
-    clearStyle(); let u = false; editor.querySelectorAll('#editor > div').forEach(d => {
-        let t = d.innerHTML; const r = /([ト][卜]|[卜][ト]|[エ][工]|[工][エ]|[ニ][二]|[二][ニ])/g;
-        if (r.test(t)) { d.innerHTML = t.replace(r, '<span class="homograph-char">$1</span>'); u = true; }
-    }); alert(u ? '⚠️ホモグラフ検出' : 'なし');
-}
-function checkProofread() {
-    clearStyle(); let idx = 1, lists = [];
-    const rules = [{ p: /言頭/g, m: '「行頭」の誤字疑い' }, { p: /言までもない/g, m: '「言うまでもない」の脱字疑い' }];
-    editor.querySelectorAll('#editor > div').forEach(d => {
-        let html = d.innerHTML, txt = d.innerText;
-        rules.forEach(r => { if (r.p.test(txt)) { html = html.replace(r.p, (m) => { lists.push(`<div>【${idx++}】${m}➔${r.m}</div>`); return `<span class="proof-error">${m}</span>`; }); d.innerHTML = html; } });
-    });
-    if (lists.length > 0) { proofList.innerHTML = lists.join(''); proofPanel.style.display = 'block'; alert('🔍誤字あり'); } else { alert('なし'); }
-}
+function clearStyle() { proofPanel.style.display = 'none'; const temp = document.createElement('div'); temp.innerHTML = editor.innerHTML; temp.querySelectorAll('.hidden-char, .homograph-char, .proof-error').forEach(s => { const p = s.parentNode; while (s.firstChild) { p.insertBefore(s.firstChild, s); } p.removeChild(s); }); editor.innerHTML = temp.innerHTML; }
+function checkHiddenChars() { clearStyle(); let u = false; editor.querySelectorAll('#editor > div').forEach(d => { let t = d.innerHTML; const r = /([\u200B-\u200D\uFEFF\u0000-\u0008\u000B\u000C\u000E-\u001F])/g; if (r.test(t)) { d.innerHTML = t.replace(r, '<span class="hidden-char">$1</span>'); u = true; } }); alert(u ? '⚠️隠し文字検出' : 'クリーンです'); }
+function checkHomographs() { clearStyle(); let u = false; editor.querySelectorAll('#editor > div').forEach(d => { let t = d.innerHTML; const r = /([ト][卜]|[卜][ト]|[エ][工]|[工][エ]|[ニ][二]|[二][ニ])/g; if (r.test(t)) { d.innerHTML = t.replace(r, '<span class="homograph-char">$1</span>'); u = true; } }); alert(u ? '⚠️ホモグラフ検出' : 'なし'); }
+function checkProofread() { clearStyle(); let idx = 1, lists = []; const rules = [{ p: /言頭/g, m: '「行頭」の誤字疑い' }, { p: /言までもない/g, m: '「言うまでもない」の脱字疑い' }]; editor.querySelectorAll('#editor > div').forEach(d => { let html = d.innerHTML, txt = d.innerText; rules.forEach(r => { if (r.p.test(txt)) { html = html.replace(r.p, (m) => { lists.push(`<div>【${idx++}】${m}➔${r.m}</div>`); return `<span class="proof-error">${m}</span>`; }); d.innerHTML = html; } }); }); if (lists.length > 0) { proofList.innerHTML = lists.join(''); proofPanel.style.display = 'block'; alert('🔍誤字あり'); } else { alert('なし'); } }
 function renderTree() { treeRoot.innerHTML = ''; fsData.root.forEach(item => treeRoot.appendChild(createElement(item, null))); }
-function createElement(item, pid) {
-    const div = document.createElement('div'); div.className = 'tree-item';
-    const lbl = document.createElement('div'); lbl.className = 'item-label'; if (item.id === currentFileId) lbl.classList.add('active');
-    lbl.textContent = (item.type === 'folder' ? '📁 ' : '📄 ') + item.name;
-    lbl.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (item.type === 'file') { saveFile(); currentFileId = item.id; currentParentFolderId = pid; localStorage.setItem('novel_current_id', currentFileId); loadFile(currentFileId); renderTree(); } 
-        else { currentParentFolderId = item.id; }
-    });
-    lbl.addEventListener('dblclick', (e) => {
-        e.stopPropagation(); const n = prompt('名前変更:', item.name); if (n) { item.name = n; saveFS(); renderTree(); }
-    });
-    div.appendChild(lbl);
-    if (item.type === 'folder' && item.children) {
-        const c = document.createElement('div'); item.children.forEach(ch => c.appendChild(createElement(ch, item.id))); div.appendChild(c);
-    }
-    return div;
-}
-function addFolder() {
-    const n = prompt('フォルダ名:', '新しいフォルダ'); if (!n) return;
-    if (currentParentFolderId) { const p = findItem(currentParentFolderId); if (p && p.type === 'folder') p.children.push({ id: 'f_'+Date.now(), type: 'folder', name: n, children: [] }); } 
-    else { fsData.root.push({ id: 'f_'+Date.now(), type: 'folder', name: n, children: [] }); }
-    saveFS(); renderTree();
-}
-function addFile() {
-    const n = prompt('話の名前:', '新しい話'); if (!n) return; const nid = 'd_' + Date.now();
-    if (currentParentFolderId) { const p = findItem(currentParentFolderId); if (p && p.type === 'folder') p.children.push({ id: nid, type: 'file', name: n, content: '<div><br></div>' }); } 
-    else { fsData.root.push({ id: nid, type: 'file', name: n, content: '<div><br></div>' }); }
-    saveFS(); currentFileId = nid; localStorage.setItem('novel_current_id', currentFileId); loadFile(nid); renderTree();
-}
-function findItem(id, items = fsData.root) {
-    for (let item of items) { if (item.id === id) return item; if (item.children) { const f = findItem(id, item.children); if (f) return f; } } return null;
-}
+function createElement(item, pid) { const div = document.createElement('div'); div.className = 'tree-item'; const lbl = document.createElement('div'); lbl.className = 'item-label'; if (item.id === currentFileId) lbl.classList.add('active'); lbl.textContent = (item.type === 'folder' ? '📁 ' : '📄 ') + item.name; lbl.addEventListener('click', (e) => { e.stopPropagation(); if (item.type === 'file') { saveFile(); currentFileId = item.id; currentParentFolderId = pid; localStorage.setItem('novel_current_id', currentFileId); loadFile(currentFileId); renderTree(); } else { currentParentFolderId = item.id; } }); lbl.addEventListener('dblclick', (e) => { e.stopPropagation(); const n = prompt('名前変更:', item.name); if (n) { item.name = n; saveFS(); renderTree(); } }); div.appendChild(lbl); if (item.type === 'folder' && item.children) { const c = document.createElement('div'); item.children.forEach(ch => c.appendChild(createElement(ch, item.id))); div.appendChild(c); } return div; }
+function addFolder() { const n = prompt('フォルダ名:', '新しいフォルダ'); if (!n) return; if (currentParentFolderId) { const p = findItem(currentParentFolderId); if (p && p.type === 'folder') p.children.push({ id: 'f_'+Date.now(), type: 'folder', name: n, children: [] }); } else { fsData.root.push({ id: 'f_'+Date.now(), type: 'folder', name: n, children: [] }); } saveFS(); renderTree(); }
+function addFile() { const n = prompt('話の名前:', '新しい話'); if (!n) return; const nid = 'd_' + Date.now(); if (currentParentFolderId) { const p = findItem(currentParentFolderId); if (p && p.type === 'folder') p.children.push({ id: nid, type: 'file', name: n, content: '<div><br></div>' }); } else { fsData.root.push({ id: nid, type: 'file', name: n, content: '<div><br></div>' }); } saveFS(); currentFileId = nid; localStorage.setItem('novel_current_id', currentFileId); loadFile(nid); renderTree(); }
+function findItem(id, items = fsData.root) { for (let item of items) { if (item.id === id) return item; if (item.children) { const f = findItem(id, item.children); if (f) return f; } } return null; }
 function loadFile(id) { const file = findItem(id); editor.innerHTML = file ? file.content : '<div><br></div>'; changeWidth(); updateLines(); }
 function saveFile() { const file = findItem(currentFileId); if (file) { file.content = editor.innerHTML; saveFS(); } }
 function saveFS() { localStorage.setItem('novel_fs_data', JSON.stringify(fsData)); }
 editor.addEventListener('input', () => { updateLines(); saveFile(); });
 editor.addEventListener('keydown', (e) => { if (e.key === 'Enter') { setTimeout(() => { changeWidth(); updateLines(); }, 10); } });
+</script>
+</body>
+</html>
 
