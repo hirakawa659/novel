@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>エディタ</title>
     <style>
-        body { font-family: 'Hiragino Kaku Gothic ProN', sans-serif; background: #fafafa; margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; -webkit-text-size-adjust: 100%; }
+        body { font-family: 'Hiragino Kaku Gothic ProN', 'Courier New', monospace; background: #fafafa; margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; -webkit-text-size-adjust: 100%; }
         #sidebar { width: 220px; background: #f0f0f4; border-right: 1px solid #ddd; display: flex; flex-direction: column; padding: 10px; flex-shrink: 0; }
         .sidebar-btn { padding: 5px; font-size: 12px; cursor: pointer; margin-bottom: 5px; width: 100%; }
         #treeRoot { overflow-y: auto; flex-grow: 1; font-size: 14px; }
@@ -13,19 +13,17 @@
         .item-label.active { background: #e4e4e7; font-weight: bold; }
         
         .main-content { flex-grow: 1; display: flex; flex-direction: column; height: 100vh; width: 100%; overflow: hidden; position: relative; }
-        
-        /* ボタンメニューを画面最上部に完全固定する設定 */
         .controls { display: flex; gap: 8px; background: #fff; padding: 10px; border-bottom: 1px solid #ddd; align-items: center; flex-wrap: wrap; position: sticky; top: 0; z-index: 100; width: 100%; box-sizing: border-box; }
         button { padding: 6px 10px; font-size: 12px; font-weight: bold; cursor: pointer; background: #f0f0f2; border: 1px solid #ccc; border-radius: 4px; }
-        button:hover { background: #e4e4e7; }
         .btn-check { background: #e0f2fe; color: #0369a1; }
         .counter { font-size: 13px; margin-right: 10px; }
         
-        .editor-container { flex-grow: 1; padding: 20px; overflow-y: auto; overflow-x: hidden; display: flex; justify-content: center; width: 100%; box-sizing: border-box; }
-        .editor-wrapper { display: flex; background: #fff; border: 1px solid #ddd; border-radius: 6px; min-height: 600px; width: 100%; box-sizing: border-box; overflow: hidden; }
+        .editor-container { flex-grow: 1; padding: 20px; overflow-y: auto; display: flex; justify-content: flex-start; align-items: flex-start; width: 100%; box-sizing: border-box; }
+        /* エディタ全体の横幅を、指定文字数ピタッリに自動ロックする設定 */
+        .editor-wrapper { display: flex; background: #fff; border: 1px solid #ddd; border-radius: 6px; min-height: 600px; width: var(--wrapper-width, max-content); box-sizing: border-box; overflow: hidden; }
         .line-numbers { width: 45px; border-right: 1px solid #eee; padding: 24px 0; text-align: right; font-size: 16px; color: #aaa; padding-right: 8px; user-select: none; font-family: monospace; flex-shrink: 0; }
         
-        /* 英語（半角）や数字でも絶対に幅が縮まない、全角等幅の正方形マス目指定 */
+        /* 縦横を全く同じ「--cell-size」にして完璧な正方形を強制固定する指定 */
         #editor {
             flex-grow: 1;
             padding: 24px;
@@ -34,40 +32,43 @@
             word-wrap: break-word;
             display: block;
             box-sizing: border-box;
-            width: 100%;
-            max-width: 100%;
-            overflow-x: hidden;
-            font-family: 'Hiragino Kaku Gothic ProN', monospace;
-            font-size: var(--grid-size, 20px);
-            line-height: calc(var(--grid-size, 20px) * 2);
-            /* 半角英数字の幅を全角に強制一致させる魔法の命令 */
+            width: var(--editor-width, 100%);
+            overflow: hidden;
+            font-family: 'Hiragino Kaku Gothic ProN', 'Courier New', monospace;
+            /* 1文字のサイズを正方形マス（--cell-size）に完全同期 */
+            font-size: var(--cell-size, 32px);
+            line-height: var(--cell-size, 32px);
+            letter-spacing: 0px !important;
+            font-kerning: none !important;
             font-variant-numeric: tabular-nums;
             text-transform: full-width;
         }
         #editor div {
-            min-height: calc(var(--grid-size, 20px) * 2);
-            height: calc(var(--grid-size, 20px) * 2);
+            min-height: var(--cell-size, 32px);
+            height: var(--cell-size, 32px);
             display: block;
             box-sizing: border-box;
             overflow: hidden;
+            /* 縦横が完全に同じサイズ（正方形）の背景線を引く */
             background-image: 
                 linear-gradient(to right, #ececec 1px, transparent 1px),
                 linear-gradient(to bottom, #ececec 1px, transparent 1px);
-            background-size: var(--grid-size, 20px) calc(var(--grid-size, 20px) * 2);
+            background-size: var(--cell-size, 32px) var(--cell-size, 32px);
             background-repeat: repeat;
             width: 100%;
-            max-width: 100%;
-            letter-spacing: 0px;
+            letter-spacing: 0px !important;
             padding-left: 0px;
+            margin: 0;
         }
         #editor div:empty::before, #editor br:only-child::before { content: "【空行】"; color: #ef4444; font-size: 12px; background: #fef2f2; padding: 1px 4px; letter-spacing: normal; }
         
-        .zenkaku-space { background-color: #f4f4f5; color: #aaa; display: inline-block; width: var(--grid-size, 20px); text-align: center; }
+        /* 特殊表示もすべて正方形サイズに統一 */
+        .zenkaku-space { background-color: #f4f4f5; color: #aaa; display: inline-block; width: var(--cell-size, 32px); text-align: center; }
         .zenkaku-space::before { content: "▢"; font-size: 14px; }
-        .hankaku-space { background-color: #f4f4f5; color: #bbb; display: inline-block; width: calc(var(--grid-size, 20px) / 2); text-align: center; }
+        .hankaku-space { background-color: #f4f4f5; color: #bbb; display: inline-block; width: calc(var(--cell-size, 32px) / 2); text-align: center; }
         .hankaku-space::before { content: "·"; font-size: 14px; }
         .hidden-char { border: 2px dashed #a855f7 !important; background: #f3e8ff !important; }
-        .homograph-char { border: 2px dashed #f97316 !important; background: #ffedd5 !important; display: inline-block; width: var(--grid-size, 20px); text-align: center; }
+        .homograph-char { border: 2px dashed #f97316 !important; background: #ffedd5 !important; display: inline-block; width: var(--cell-size, 32px); text-align: center; }
         .proof-error { background-color: #fce7f3 !important; border-bottom: 2px dotted #db2777 !important; display: inline-block; }
         #proofPanel { background: #fff; border: 1px solid #ddd; padding: 15px; margin-top: 10px; display: none; font-size: 14px; width: 100%; box-sizing: border-box; }
         .proof-item { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed #eee; line-height: 1.5; }
@@ -129,23 +130,31 @@ window.addEventListener('DOMContentLoaded', () => {
 function toggleSidebar() { 
     if (sidebar.style.display === 'none') { sidebar.style.display = 'flex'; mainMenuBtn.style.display = 'none'; } 
     else { sidebar.style.display = 'none'; mainMenuBtn.style.display = 'block'; }
-    setTimeout(changeWidth, 150);
+    setTimeout(changeWidth, 100);
 }
 function updateLines() { const divs = editor.querySelectorAll('#editor > div'); let count = divs.length === 0 ? 1 : divs.length, html = ''; for(let i=1; i<=count; i++) { html += i + '<br>'; } lineNumbers.innerHTML = html; charCount.textContent = editor.innerText.replace(/\n/g, '').length; }
 
+// マス目の縦横を1対1の「完全な正方形」に固定して幅を割り出す計算
 function changeWidth() {
     const val = widthSelect.value, divs = editor.querySelectorAll('#editor > div');
     if (val === 'max') {
-        document.documentElement.style.setProperty('--grid-size', '20px');
+        document.documentElement.style.setProperty('--cell-size', '32px');
+        document.documentElement.style.setProperty('--wrapper-width', '100%');
+        document.documentElement.style.setProperty('--editor-width', '100%');
     } else {
         const num = parseInt(val);
-        const containerWidth = editorWrapper.clientWidth - 50 - 48; 
-        const gridSize = containerWidth / num; 
-        document.documentElement.style.setProperty('--grid-size', gridSize + 'px');
+        // iPadの画面上で最も美しく読みやすい「1マス＝32ピクセル」の完全正方形に固定！
+        const cellSize = 32; 
+        const editorPixelWidth = num * cellSize;
+        const wrapperPixelWidth = editorPixelWidth + 45 + 48; // 行番号幅 + パディング分
+        
+        document.documentElement.style.setProperty('--cell-size', cellSize + 'px');
+        document.documentElement.style.setProperty('--wrapper-width', wrapperPixelWidth + 'px');
+        document.documentElement.style.setProperty('--editor-width', editorPixelWidth + 'px');
     }
-    const currentGrid = document.documentElement.style.getPropertyValue('--grid-size') || '20px';
-    lineNumbers.style.fontSize = `calc(${currentGrid} * 0.7)`;
-    lineNumbers.style.lineHeight = `calc(${currentGrid} * 2)`;
+    const currentGrid = document.documentElement.style.getPropertyValue('--cell-size') || '32px';
+    lineNumbers.style.fontSize = `calc(${currentGrid} * 0.55)`;
+    lineNumbers.style.lineHeight = currentGrid;
 }
 function goToParentFolder() { if (currentParentFolderId) { const p = findItem(currentParentFolderId); if (p) alert('「' + p.name + '」に戻りました'); } else { alert('最上層です'); } }
 function copyText() { clearStyle(); navigator.clipboard.writeText(editor.innerText).then(() => alert('コピーしました')); }
