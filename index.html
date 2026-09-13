@@ -14,13 +14,15 @@
         button { padding: 6px 10px; font-size: 12px; font-weight: bold; cursor: pointer; background: #f0f0f2; border: 1px solid #ccc; border-radius: 4px; }
         .btn-check { background: #e0f2fe; color: #0369a1; }
         .counter { font-size: 13px; margin-right: 10px; }
-        .editor-container { flex-grow: 1; padding: 15px; overflow-y: auto; }
+        
+        /* 指でのスライド・タッチ操作を可能にするための調整 */
+        .editor-container { flex-grow: 1; padding: 15px; overflow: auto; -webkit-overflow-scrolling: touch; }
         .editor-wrapper { display: flex; background: #fff; border: 1px solid #ddd; border-radius: 6px; min-height: 500px; width: max-content; }
         .line-numbers { width: 40px; border-right: 1px solid #eee; padding: 24px 0; text-align: right; font-size: 20px; line-height: 40px; color: #aaa; padding-right: 5px; user-select: none; }
-        #editor { padding: 24px; font-size: 20px; line-height: 40px; outline: none; white-space: pre-wrap; word-wrap: break-word; display: block; }
+        #editor { padding: 24px; font-size: 20px; line-height: 40px; outline: none; white-space: pre-wrap; word-wrap: break-word; display: block; -webkit-user-select: text; user-select: text; }
         #editor div { min-height: 40px; height: 40px; display: block; box-sizing: border-box;
             background-image: linear-gradient(to right, #ececec 1px, transparent 1px), linear-gradient(to bottom, #ececec 1px, transparent 1px);
-            background-size: 40px 40px; background-repeat: repeat; width: 100%; letter-spacing: 20px; padding-left: 10px; }
+            background-size: 40px 40px; background-repeat: repeat; width: 100%; letter-spacing: 20px; padding-left: 10px; pointer-events: auto; }
         #editor div:empty::before, #editor br:only-child::before { content: "【空行】"; color: #ef4444; font-size: 12px; background: #fef2f2; padding: 1px 4px; letter-spacing: normal; }
         .zenkaku-space { background-color: #f4f4f5; color: #aaa; display: inline-block; width: 40px; text-align: center; letter-spacing: normal; }
         .zenkaku-space::before { content: "▢"; font-size: 14px; }
@@ -49,7 +51,9 @@
         <button class="btn-check" onclick="checkHiddenChars()">隠し文字</button>
         <button class="btn-check" onclick="checkHomographs()">ホモグラフ</button>
         <button class="btn-check" onclick="checkProofread()">誤字チェック</button>
-        <div class="select-wrapper"><label>1行:</label><select id="widthSelect" onchange="changeWidth()"><option value="max">画面幅</option><option value="30">30字</option><option value="40" selected>40字</option><option value="50">50字</option><option value="60">60字</option></select></div>
+        
+        <!-- 20〜40文字のすべての整数を選べるように変更 -->
+        <div class="select-wrapper"><label>1行:</label><select id="widthSelect" onchange="changeWidth()"></select></div>
         <div class="counter"><span id="charCount">0</span> 文字</div>
         <span id="saveStatus" style="font-size:12px; color:#aaa;">保存完了</span>
     </div>
@@ -63,7 +67,18 @@ const editor = document.getElementById('editor'), lineNumbers = document.getElem
 const widthSelect = document.getElementById('widthSelect'), treeRoot = document.getElementById('treeRoot'), editorWrapper = document.getElementById('editorWrapper');
 const sidebar = document.getElementById('sidebar'), mainMenuBtn = document.getElementById('mainMenuBtn'), proofPanel = document.getElementById('proofPanel'), proofList = document.getElementById('proofList');
 let fsData = { root: [] }, currentFileId = null, currentParentFolderId = null;
-    window.addEventListener('DOMContentLoaded', () => {
+
+// 20〜40のセレクトボックスを自動生成
+function initSelect() {
+    widthSelect.innerHTML = '<option value="max">画面幅</option>';
+    for(let i = 20; i <= 40; i++) {
+        let opt = document.createElement('option'); opt.value = i; opt.textContent = i + '字';
+        if(i === 30) opt.selected = true; widthSelect.appendChild(opt);
+    }
+}
+
+window.addEventListener('DOMContentLoaded', () => {
+    initSelect();
     const savedFs = localStorage.getItem('novel_fs_data'), savedWidth = localStorage.getItem('novel_width'), savedCurrent = localStorage.getItem('novel_current_id');
     if (savedFs) { fsData = JSON.parse(savedFs); } else {
         const fid = 'f_' + Date.now(), docid = 'd_' + Date.now();
@@ -96,3 +111,5 @@ editor.addEventListener('keydown', (e) => { if (e.key === 'Enter') { setTimeout(
 </body>
 </html>
 
+
+    
