@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>エディタ</title>
     <style>
-        body { font-family: monospace; background: #fafafa; margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; -webkit-text-size-adjust: 100%; }
+        body { font-family: 'Hiragino Kaku Gothic ProN', 'ヒラギノ角ゴ ProN W3', monospace; background: #fafafa; margin: 0; padding: 0; display: flex; height: 100vh; overflow: hidden; -webkit-text-size-adjust: 100%; }
         #sidebar { width: 220px; background: #f0f0f4; border-right: 1px solid #ddd; display: flex; flex-direction: column; padding: 10px; flex-shrink: 0; }
         .sidebar-btn { padding: 5px; font-size: 12px; cursor: pointer; margin-bottom: 5px; width: 100%; }
         #treeRoot { overflow-y: auto; flex-grow: 1; font-size: 14px; }
@@ -19,16 +19,49 @@
         .editor-container { flex-grow: 1; padding: 20px; overflow-y: auto; overflow-x: hidden; display: flex; justify-content: center; width: 100%; box-sizing: border-box; }
         .editor-wrapper { display: flex; background: #fff; border: 1px solid #ddd; border-radius: 6px; min-height: 600px; width: 100%; box-sizing: border-box; overflow: hidden; }
         .line-numbers { width: 45px; border-right: 1px solid #eee; padding: 24px 0; text-align: right; font-size: 16px; color: #aaa; padding-right: 8px; user-select: none; font-family: monospace; flex-shrink: 0; }
-        #editor { flex-grow: 1; padding: 24px; outline: none; white-space: pre-wrap; word-wrap: break-word; display: block; font-family: monospace; box-sizing: border-box; width: 100%; max-width: 100%; overflow-x: hidden; font-size: var(--grid-size, 20px); line-height: calc(var(--grid-size, 20px) * 2); }
-        #editor div { min-height: calc(var(--grid-size, 20px) * 2); height: calc(var(--grid-size, 20px) * 2); display: block; box-sizing: border-box; overflow: hidden; background-image: linear-gradient(to right, #ececec 1px, transparent 1px), linear-gradient(to bottom, #ececec 1px, transparent 1px); background-size: var(--grid-size, 20px) calc(var(--grid-size, 20px) * 2); background-repeat: repeat; width: 100%; max-width: 100%; letter-spacing: var(--grid-size, 20px); padding-left: calc(var(--grid-size, 20px) / 2); }
+        
+        /* iPadの日本語フォントで『完全な正方形マス』になるよう一文字の幅と線幅を完全一致に修正 */
+        #editor {
+            flex-grow: 1;
+            padding: 24px;
+            outline: none;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            display: block;
+            box-sizing: border-box;
+            width: 100%;
+            max-width: 100%;
+            overflow-x: hidden;
+            font-family: 'Hiragino Kaku Gothic ProN', 'ヒラギノ角ゴ ProN W3', monospace;
+            font-size: var(--grid-size, 20px);
+            line-height: calc(var(--grid-size, 20px) * 2);
+        }
+        #editor div {
+            min-height: calc(var(--grid-size, 20px) * 2);
+            height: calc(var(--grid-size, 20px) * 2);
+            display: block;
+            box-sizing: border-box;
+            overflow: hidden;
+            background-image: 
+                linear-gradient(to right, #ececec 1px, transparent 1px),
+                linear-gradient(to bottom, #ececec 1px, transparent 1px);
+            background-size: var(--grid-size, 20px) calc(var(--grid-size, 20px) * 2);
+            background-repeat: repeat;
+            width: 100%;
+            max-width: 100%;
+            letter-spacing: 0px;
+            padding-left: 0px;
+        }
         #editor div:empty::before, #editor br:only-child::before { content: "【空行】"; color: #ef4444; font-size: 12px; background: #fef2f2; padding: 1px 4px; letter-spacing: normal; }
-        .zenkaku-space { background-color: #f4f4f5; color: #aaa; display: inline-block; width: var(--grid-size, 20px); text-align: center; letter-spacing: normal; }
+        
+        /* 特殊文字も正方形幅に固定 */
+        .zenkaku-space { background-color: #f4f4f5; color: #aaa; display: inline-block; width: var(--grid-size, 20px); text-align: center; }
         .zenkaku-space::before { content: "▢"; font-size: 14px; }
-        .hankaku-space { background-color: #f4f4f5; color: #bbb; display: inline-block; width: calc(var(--grid-size, 20px) / 2); text-align: center; letter-spacing: normal; }
+        .hankaku-space { background-color: #f4f4f5; color: #bbb; display: inline-block; width: calc(var(--grid-size, 20px) / 2); text-align: center; }
         .hankaku-space::before { content: "·"; font-size: 14px; }
         .hidden-char { border: 2px dashed #a855f7 !important; background: #f3e8ff !important; }
-        .homograph-char { border: 2px dashed #f97316 !important; background: #ffedd5 !important; display: inline-block; letter-spacing: normal; width: var(--grid-size, 20px); text-align: center; }
-        .proof-error { background-color: #fce7f3 !important; border-bottom: 2px dotted #db2777 !important; display: inline-block; letter-spacing: normal; }
+        .homograph-char { border: 2px dashed #f97316 !important; background: #ffedd5 !important; display: inline-block; width: var(--grid-size, 20px); text-align: center; }
+        .proof-error { background-color: #fce7f3 !important; border-bottom: 2px dotted #db2777 !important; display: inline-block; }
         #proofPanel { background: #fff; border: 1px solid #ddd; padding: 15px; margin-top: 10px; display: none; font-size: 14px; width: 100%; box-sizing: border-box; }
         .proof-item { margin-bottom: 8px; padding-bottom: 8px; border-bottom: 1px dashed #eee; line-height: 1.5; }
     </style>
@@ -60,7 +93,7 @@
     </div>
 </div>
 <script>
-const editor = document.getElementById('editor'), lineNumbers = document.getElementById('lineNumbers'), charCount = document.getElementById('charCount');
+    const editor = document.getElementById('editor'), lineNumbers = document.getElementById('lineNumbers'), charCount = document.getElementById('charCount');
 const widthSelect = document.getElementById('widthSelect'), treeRoot = document.getElementById('treeRoot'), editorWrapper = document.getElementById('editorWrapper');
 const sidebar = document.getElementById('sidebar'), mainMenuBtn = document.getElementById('mainMenuBtn'), proofPanel = document.getElementById('proofPanel'), proofList = document.getElementById('proofList');
 let fsData = { root: [] }, currentFileId = null, currentParentFolderId = null;
@@ -82,56 +115,45 @@ window.addEventListener('DOMContentLoaded', () => {
     }
     if (savedCurrent) currentFileId = savedCurrent; if (savedWidth) widthSelect.value = savedWidth;
     renderTree(); loadFile(currentFileId); 
-    if (savedRaw) { editor.innerHTML = savedRaw; } // 何があっても直前の落書きを最優先で完全復活
+    if (savedRaw) { editor.innerHTML = savedRaw; }
     changeWidth(); updateLines();
     window.addEventListener('resize', changeWidth);
 });
-function toggleSidebar() { if (sidebar.style.display === 'none') { sidebar.style.display = 'flex'; mainMenuBtn.style.display = 'none'; } else { sidebar.style.display = 'none'; mainMenuBtn.style.display = 'block'; } setTimeout(changeWidth, 100); }
+function toggleSidebar() { 
+    if (sidebar.style.display === 'none') { sidebar.style.display = 'flex'; mainMenuBtn.style.display = 'none'; } 
+    else { sidebar.style.display = 'none'; mainMenuBtn.style.display = 'block'; }
+    setTimeout(changeWidth, 150);
+}
 function updateLines() { const divs = editor.querySelectorAll('#editor > div'); let count = divs.length === 0 ? 1 : divs.length, html = ''; for(let i=1; i<=count; i++) { html += i + '<br>'; } lineNumbers.innerHTML = html; charCount.textContent = editor.innerText.replace(/\n/g, '').length; }
+
+// 正方形の比率を完全にキープした自動フィット計算
 function changeWidth() {
-    const val = widthSelect.value;
-    if (val === 'max') { document.documentElement.style.setProperty('--grid-size', '20px'); } 
-    else { const num = parseInt(val), containerWidth = editorWrapper.clientWidth - 50, gridSize = Math.floor(containerWidth / (num + 1)); document.documentElement.style.setProperty('--grid-size', gridSize + 'px'); }
+    const val = widthSelect.value, divs = editor.querySelectorAll('#editor > div');
+    if (val === 'max') {
+        document.documentElement.style.setProperty('--grid-size', '20px');
+    } else {
+        const num = parseInt(val);
+        const containerWidth = editorWrapper.clientWidth - 50 - 48; // パディングと番号幅を引く
+        const gridSize = containerWidth / num; // 文字幅に完璧に一致させる
+        document.documentElement.style.setProperty('--grid-size', gridSize + 'px');
+    }
     const currentGrid = document.documentElement.style.getPropertyValue('--grid-size') || '20px';
-    lineNumbers.style.fontSize = `calc(${currentGrid} * 0.8)`; lineNumbers.style.lineHeight = `calc(${currentGrid} * 2)`;
+    lineNumbers.style.fontSize = `calc(${currentGrid} * 0.7)`;
+    lineNumbers.style.lineHeight = `calc(${currentGrid} * 2)`;
 }
 function goToParentFolder() { if (currentParentFolderId) { const p = findItem(currentParentFolderId); if (p) alert('「' + p.name + '」に戻りました'); } else { alert('最上層です'); } }
 function copyText() { clearStyle(); navigator.clipboard.writeText(editor.innerText).then(() => alert('コピーしました')); }
 function clearStyle() { proofPanel.style.display = 'none'; const temp = document.createElement('div'); temp.innerHTML = editor.innerHTML; temp.querySelectorAll('.hidden-char, .homograph-char, .proof-error').forEach(s => { const p = s.parentNode; while (s.firstChild) { p.insertBefore(s.firstChild, s); } p.removeChild(s); }); editor.innerHTML = temp.innerHTML; }
 function checkHiddenChars() { clearStyle(); let u = false; editor.querySelectorAll('#editor > div').forEach(d => { let t = d.innerHTML; const r = /([\u200B-\u200D\uFEFF\u0000-\u0008\u000B\u000C\u000E-\u001F])/g; if (r.test(t)) { d.innerHTML = t.replace(r, '<span class="hidden-char">$1</span>'); u = true; } }); alert(u ? '⚠️隠し文字検出' : 'クリーンです'); }
-
-// 外国語（ロシア文字のａ、αなど）や不正な文字を文章全体から一括で暴くプロの仕様
 function checkHomographs() {
     clearStyle(); let u = false;
     editor.querySelectorAll('#editor > div').forEach(d => {
-        // カタカナ・漢字が混ざる「口（くち）」や、日本語ではない範囲の外国文字（ロシア文字など）を全スキャン
         const r = /([口工二卜]|[^\u0000-\u007F\u3040-\u309F\u30A0-\u30FF\u4E00-\u9FFF\u3000-\u303F])/g;
-        if (r.test(d.innerText)) {
-            d.innerHTML = d.innerHTML.replace(r, '<span class="homograph-char">$1</span>');
-            u = true;
-        }
+        if (r.test(d.innerText)) { d.innerHTML = d.innerHTML.replace(r, '<span class="homograph-char">$1</span>'); u = true; }
     });
-    alert(u ? '⚠️ロシア文字、または見た目の怪しい偽装文字（口や工など）を一括検出しました！' : '怪しい混同文字は見つかりませんでした。');
+    alert(u ? '⚠️ホモグラフ、またはロシア文字等の外国文字を検出しました！' : '混同文字は見つかりませんでした。');
 }
-
-// 辞書にない怪しい単語、てにをは、小説でやりがちなミスをまとめて一括スキャン
-function checkProofread() {
-    clearStyle(); let idx = 1, lists = [];
-    // プロと同じ日本語文法ルール・誤字辞書
-    const rules = [
-        { p: /言頭/g, m: '「行頭」の誤字疑い' }, { p: /言までもない/g, m: '「言うまでもない」の脱字疑い' },
-        { p: /([、。・])\1+/g, m: '記号（、。・）が連続して打ち込まれています' },
-        { p: /(ですが|けれど)。*(ですが|けれど)/g, m: '1文の中に同じ接続詞が重複していて、文章がねじれている可能性があります' },
-        { p: /([^分])かって/g, m: '「買って」「勝って」「割って」などのタイポ（打ち間違い）がないか確認してください' }
-    ];
-    editor.querySelectorAll('#editor > div').forEach(d => {
-        let html = d.innerHTML, txt = d.innerText;
-        rules.forEach(r => { if (r.p.test(txt)) { html = html.replace(r.p, (m) => { lists.push(`<div class="proof-item"><b>【指摘 ${idx}】</b> 「${m}」 ➔ ${r.m}</div>`); return `<span class="proof-error">${m}</span>`; }); d.innerHTML = html; } });
-    });
-    if (lists.length > 0) { proofList.innerHTML = lists.join(''); proofPanel.style.display = 'block'; alert(`🔍 文章全体から ${idx-1} 箇所の気になる点を見つけました！`); } 
-    else { alert('一般的な誤字や文法エラーは見つかりませんでした。クリーンです。'); }
-}
-
+function checkProofread() { clearStyle(); let idx = 1, lists = []; const rules = [{ p: /言頭/g, m: '「行頭」の誤字疑い' }, { p: /言までもない/g, m: '「言うまでもない」の脱字疑い' }, { p: /([、。・])\1+/g, m: '記号が連続しています' }, { p: /(ですが|けれど)。*(ですが|けれど)/g, m: '1文中に同じ接続詞が重複しています' }, { p: /([^分])かって/g, m: '「買って」「勝って」などのタイポ確認' }]; editor.querySelectorAll('#editor > div').forEach(d => { let html = d.innerHTML, txt = d.innerText; rules.forEach(r => { if (r.p.test(txt)) { html = html.replace(r.p, (m) => { lists.push(`<div class="proof-item"><b>【指摘 ${idx}】</b> 「${m}」 ➔ ${r.m}</div>`); return `<span class="proof-error">${m}</span>`; }); d.innerHTML = html; } }); }); if (lists.length > 0) { proofList.innerHTML = lists.join(''); proofPanel.style.display = 'block'; alert(`🔍 文章全体から ${idx-1} 箇所の気になる点を見つけました！`); } else { alert('エラーは見つかりませんでした。'); } }
 function renderTree() { treeRoot.innerHTML = ''; fsData.root.forEach(item => treeRoot.appendChild(createElement(item, null))); }
 function createElement(item, pid) { const div = document.createElement('div'); div.className = 'tree-item'; const lbl = document.createElement('div'); lbl.className = 'item-label'; if (item.id === currentFileId) lbl.classList.add('active'); lbl.textContent = (item.type === 'folder' ? '📁 ' : '📄 ') + item.name; lbl.addEventListener('click', (e) => { e.stopPropagation(); if (item.type === 'file') { saveFile(); currentFileId = item.id; currentParentFolderId = pid; localStorage.setItem('novel_current_id', currentFileId); loadFile(currentFileId); renderTree(); } else { currentParentFolderId = item.id; } }); lbl.addEventListener('dblclick', (e) => { e.stopPropagation(); const n = prompt('名前変更:', item.name); if (n) { item.name = n; saveFS(); renderTree(); } }); div.appendChild(lbl); if (item.type === 'folder' && item.children) { const c = document.createElement('div'); item.children.forEach(ch => c.appendChild(createElement(ch, item.id))); div.appendChild(c); } return div; }
 function addFolder() { const n = prompt('フォルダ名:', '新しいフォルダ'); if (!n) return; if (currentParentFolderId) { const p = findItem(currentParentFolderId); if (p && p.type === 'folder') p.children.push({ id: 'f_'+Date.now(), type: 'folder', name: n, children: [] }); } else { fsData.root.push({ id: 'f_'+Date.now(), type: 'folder', name: n, children: [] }); } saveFS(); renderTree(); }
@@ -140,10 +162,9 @@ function findItem(id, items = fsData.root) { for (let item of items) { if (item.
 function loadFile(id) { const file = findItem(id); editor.innerHTML = file ? file.content : '<div><br></div>'; changeWidth(); updateLines(); }
 function saveFile() { const file = findItem(currentFileId); if (file) { file.content = editor.innerHTML; saveFS(); } }
 function saveFS() { localStorage.setItem('novel_fs_data', JSON.stringify(fsData)); }
-
-// 一文字打つたびに、落書きも含めて100%最優先で記憶する強固な防衛処理
 editor.addEventListener('input', () => { updateLines(); saveFile(); localStorage.setItem('novel_raw_emergency', editor.innerHTML); });
 editor.addEventListener('keydown', (e) => { if (e.key === 'Enter') { setTimeout(() => { changeWidth(); updateLines(); }, 10); } });
 </script>
 </body>
 </html>
+
