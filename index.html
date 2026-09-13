@@ -66,18 +66,31 @@
         <div id="proofPanel"><b style="color:#db2777; font-size:16px;">🔍 自動指摘・一括校正アドバイス一覧</b><hr><div id="proofList"></div></div>
     </div>
 </div>
-<script>
+    <script>
 const editor = document.getElementById('editor'), lineNumbers = document.getElementById('lineNumbers'), charCount = document.getElementById('charCount');
 const widthSelect = document.getElementById('widthSelect'), treeRoot = document.getElementById('treeRoot'), editorWrapper = document.getElementById('editorWrapper');
 const sidebar = document.getElementById('sidebar'), mainMenuBtn = document.getElementById('mainMenuBtn'), proofPanel = document.getElementById('proofPanel'), proofList = document.getElementById('proofList');
 let fsData = { root: [] }, currentFileId = null, currentParentFolderId = null;
-function initSelect() { widthSelect.innerHTML = '<option value="max">画面幅</option>'; for(let i = 20; i <= 40; i++) { let opt = document.createElement('option'); opt.value = i; opt.textContent = i + '字'; if(i === 30) opt.selected = true; widthSelect.appendChild(opt); } }
+
+function initSelect() {
+    widthSelect.innerHTML = '<option value="max">画面幅</option>';
+    for(let i = 20; i <= 40; i++) {
+        let opt = document.createElement('option'); opt.value = i; opt.textContent = i + '字';
+        widthSelect.appendChild(opt);
+    }
+}
 function hardResetBugs() { localStorage.removeItem('novel_fs_data'); localStorage.removeItem('novel_current_id'); localStorage.removeItem('novel_raw_emergency'); }
+
 window.addEventListener('DOMContentLoaded', () => {
-    if (!localStorage.getItem('bug_fix_v6_done')) { hardResetBugs(); localStorage.setItem('bug_fix_v6_done', 'true'); }
-    initSelect(); const savedFs = localStorage.getItem('novel_fs_data'), savedWidth = localStorage.getItem('novel_width'), savedCurrent = localStorage.getItem('novel_current_id'), savedRaw = localStorage.getItem('novel_raw_emergency');
-    if (savedFs) { fsData = JSON.parse(savedFs); } else { const fid = 'f_' + Date.now(), docid = 'd_' + Date.now(); fsData.root.push({ id: fid, type: 'folder', name: '作品フォルダ', children: [{ id: docid, type: 'file', name: '第1話', content: '<div><br></div>' }] }); currentFileId = docid; }
-    if (savedCurrent) currentFileId = savedCurrent; if (savedWidth) widthSelect.value = savedWidth;
+    if (!localStorage.getItem('bug_fix_v7_done')) { hardResetBugs(); localStorage.setItem('bug_fix_v7_done', 'true'); }
+    initSelect();
+    const savedFs = localStorage.getItem('novel_fs_data'), savedWidth = localStorage.getItem('novel_width'), savedCurrent = localStorage.getItem('novel_current_id'), savedRaw = localStorage.getItem('novel_raw_emergency');
+    if (savedFs) { fsData = JSON.parse(savedFs); } else {
+        const fid = 'f_' + Date.now(), docid = 'd_' + Date.now();
+        fsData.root.push({ id: fid, type: 'folder', name: '作品フォルダ', children: [{ id: docid, type: 'file', name: '第1話', content: '<div><br></div>' }] });
+        currentFileId = docid;
+    }
+    widthSelect.value = savedWidth ? savedWidth : "30";
     renderTree(); loadFile(currentFileId); if (savedRaw) { editor.innerHTML = savedRaw; } changeWidth(); updateLines(); window.addEventListener('resize', changeWidth);
 });
 function toggleSidebar() { if (sidebar.style.display === 'none') { sidebar.style.display = 'flex'; mainMenuBtn.style.display = 'none'; } else { sidebar.style.display = 'none'; mainMenuBtn.style.display = 'block'; } setTimeout(changeWidth, 100); }
@@ -102,3 +115,5 @@ editor.addEventListener('keydown', (e) => { if (e.key === 'Enter') { setTimeout(
 </script>
 </body>
 </html>
+
+
