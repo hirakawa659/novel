@@ -12,74 +12,51 @@
         .item-label { padding: 4px; border-radius: 4px; cursor: pointer; }
         .item-label.active { background: #e4e4e7; font-weight: bold; }
         
-        /* 画面構造を完全に二分割し、ボタンエリアの完全不動を保証 */
-        .main-content { flex-grow: 1; display: flex; flex-direction: column; height: 100vh; width: 100%; overflow: hidden; }
-        .controls { display: flex; gap: 8px; background: #fff; padding: 10px; border-bottom: 1px solid #ddd; align-items: center; flex-wrap: wrap; width: 100%; box-sizing: border-box; flex-shrink: 0; }
+        /* 画面上部にヘッダーを100%絶対不動で溶接する設定 */
+        .main-content { flex-grow: 1; display: flex; flex-direction: column; height: 100vh; width: 100%; overflow: hidden; position: relative; }
+        .controls { display: flex; gap: 8px; background: #fff; padding: 10px; border-bottom: 1px solid #ddd; align-items: center; flex-wrap: wrap; width: 100%; box-sizing: border-box; flex-shrink: 0; position: absolute; top: 0; left: 0; height: auto; z-index: 9999; }
         button { padding: 6px 10px; font-size: 12px; font-weight: bold; cursor: pointer; background: #f0f0f2; border: 1px solid #ccc; border-radius: 4px; }
         .btn-check { background: #e0f2fe; color: #0369a1; }
         .counter { font-size: 13px; margin-right: 10px; }
         
-        .editor-container { flex-grow: 1; padding: 20px; overflow-y: auto; overflow-x: auto; display: flex; justify-content: flex-start; align-items: flex-start; box-sizing: border-box; }
-        /* 横幅をJavaScriptで計算した文字数ピクセルに完全固定ロック（最大幅も制限） */
+        /* 執筆エリアの部屋をボタンメニューの下から独立して開始させる設定 */
+        .editor-container { flex-grow: 1; padding: 20px; margin-top: 55px; overflow-y: auto; overflow-x: auto; display: flex; justify-content: flex-start; align-items: flex-start; box-sizing: border-box; }
         .editor-wrapper { display: flex; background: #fff; border: 1px solid #ddd; border-radius: 6px; min-height: 600px; width: var(--wrapper-width, 1100px) !important; max-width: var(--wrapper-width, 1100px) !important; box-sizing: border-box; overflow: hidden; flex-shrink: 0; }
-        .line-numbers { width: 45px; border-right: 1px solid #eee; padding: 24px 0; text-align: right; font-size: 16px; color: #aaa; padding-right: 8px; user-select: none; font-family: monospace; flex-shrink: 0; box-sizing: border-box; }
+
+
+
+                .line-numbers { width: 45px; border-right: 1px solid #eee; padding: 24px 0; text-align: right; font-size: 16px; color: #aaa; padding-right: 8px; user-select: none; font-family: monospace; flex-shrink: 0; box-sizing: border-box; }
         
-        /* 1文字＝縦横35pxの完全等幅正方形。iPadのシステムバグを力技で防ぐ指定 */
+        /* どんな特殊文字・英語もすべて35pxの正方形に閉じ込めて幅を狂わせない設定 */
         #editor {
-            flex-grow: 1;
-            padding: 24px;
-            outline: none;
-            white-space: pre-wrap;
-            word-wrap: break-word;
-            display: block !important;
-            box-sizing: border-box;
-            width: var(--editor-width, 1000px) !important;
-            max-width: var(--editor-width, 1000px) !important;
-            overflow: hidden;
-            font-family: monospace, 'Courier New', sans-serif;
-            font-size: var(--cell-size, 35px) !important;
-            line-height: var(--cell-size, 35px) !important;
-            letter-spacing: 0px !important;
-            font-kerning: none !important;
-            text-transform: full-width !important;
-            font-variant-numeric: tabular-nums !important;
-            text-align: left !important;
+            flex-grow: 1; padding: 24px; outline: none; white-space: pre-wrap; word-wrap: break-word; display: block !important; box-sizing: border-box;
+            width: var(--editor-width, 1000px) !important; max-width: var(--editor-width, 1000px) !important; overflow: hidden;
+            font-family: monospace, 'Courier New', sans-serif; font-size: var(--cell-size, 35px) !important; line-height: var(--cell-size, 35px) !important;
+            letter-spacing: 0px !important; font-kerning: none !important; text-transform: full-width !important; font-variant-numeric: tabular-nums !important; text-align: left !important;
         }
         
-        /* 上付き・下付き記号をiPadのバグに負けず1マスに引き伸ばす強制命令 */
+        /* 上付き・下付き記号を強制的に幅1マスの箱に変形させてズレを完全撲滅する命令 */
         #editor div * { 
-            font-size: 100% !important; 
-            vertical-align: baseline !important; 
-            position: static !important; 
-            display: inline-block !important;
-            width: 1em !important;
-            text-align: center !important;
-            line-height: inherit !important;
+            font-size: 100% !important; vertical-align: baseline !important; position: static !important; 
+            display: inline-block !important; width: 1em !important; max-width: 1em !important; min-width: 1em !important;
+            text-align: center !important; line-height: inherit !important; box-sizing: border-box !important; margin: 0 !important; padding: 0 !important;
         }
 
         #editor div {
-            min-height: var(--cell-size, 35px) !important;
-            height: var(--cell-size, 35px) !important;
-            display: block !important;
-            box-sizing: border-box;
-            overflow: hidden;
-            text-align: left !important;
-            background-image: 
-                linear-gradient(to right, #ececec 1px, transparent 1px),
-                linear-gradient(to bottom, #ececec 1px, transparent 1px) !important;
-            background-size: var(--cell-size, 35px) var(--cell-size, 35px) !important;
-            background-repeat: repeat !important;
-            width: 100% !important;
-            letter-spacing: 0px !important;
-            padding-left: 0px;
-            margin: 0;
+            min-height: var(--cell-size, 35px) !important; height: var(--cell-size, 35px) !important; display: block !important; box-sizing: border-box; overflow: hidden; text-align: left !important;
+            background-image: linear-gradient(to right, #ececec 1px, transparent 1px), linear-gradient(to bottom, #ececec 1px, transparent 1px) !important;
+            background-size: var(--cell-size, 35px) var(--cell-size, 35px) !important; background-repeat: repeat !important;
+            width: 100% !important; letter-spacing: 0px !important; padding-left: 0px; margin: 0;
         }
         #editor div:empty::before, #editor br:only-child::before { content: "【空行】"; color: #ef4444; font-size: 12px; background: #fef2f2; padding: 1px 4px; letter-spacing: normal; display: inline-block !important; width: auto !important; }
         
         .zenkaku-space { background-color: #f4f4f5; color: #aaa; display: inline-block !important; width: var(--cell-size, 35px) !important; text-align: center; }
         .zenkaku-space::before { content: "▢"; font-size: 14px; }
-        .hankaku-space { background-color: #f4f4f5; color: #bbb; display: inline-block !important; width: calc(var(--cell-size, 35px) / 2) !important; text-align: center; }
-        .hankaku-space::before { content: "·"; font-size: 14px; }
+        
+        /* 半角スペースが出たらずっと背景をグレー色に染めて視認性をMAXにする設定 */
+        .hankaku-space { background-color: #e4e4e7 !important; color: #71717a !important; display: inline-block !important; width: var(--cell-size, 35px) !important; text-align: center; border-radius: 2px; }
+        .hankaku-space::before { content: "·"; font-size: 14px; font-weight: bold; }
+        
         .hidden-char { border: 2px dashed #a855f7 !important; background: #f3e8ff !important; }
         .homograph-char { border: 2px dashed #f97316 !important; background: #ffedd5 !important; display: inline-block !important; width: var(--cell-size, 35px) !important; text-align: center; }
         .proof-error { background-color: #fce7f3 !important; border-bottom: 2px dotted #db2777 !important; display: inline-block !important; }
@@ -93,8 +70,10 @@
     <div style="display:flex; gap:4px;"><button class="sidebar-btn" onclick="addFolder()">+フォルダ</button><button class="sidebar-btn" onclick="addFile()">+新しい話</button></div>
     <div id="treeRoot"></div>
 </div>
-<div class="main-content">
-    <div class="controls">
+
+
+    <div class="main-content">
+    <div class="controls" id="controlBar">
         <button onclick="toggleSidebar()" id="mainMenuBtn" style="display:none;">▶ メニューを開く</button>
         <button onclick="goToParentFolder()">戻る</button>
         <button onclick="document.execCommand('undo')">取り消し</button>
@@ -126,12 +105,10 @@ function initSelect() {
         widthSelect.appendChild(opt);
     }
 }
-
 function hardResetBugs() { localStorage.removeItem('novel_fs_data'); localStorage.removeItem('novel_current_id'); localStorage.removeItem('novel_raw_emergency'); }
 
 window.addEventListener('DOMContentLoaded', () => {
-    // 完全に過去のゴミ記憶を自動大掃除してリセットを確定
-    if (!localStorage.getItem('bug_fix_v8_done')) { hardResetBugs(); localStorage.setItem('bug_fix_v8_done', 'true'); }
+    if (!localStorage.getItem('bug_fix_v9_done')) { hardResetBugs(); localStorage.setItem('bug_fix_v9_done', 'true'); }
     initSelect();
     const savedFs = localStorage.getItem('novel_fs_data'), savedWidth = localStorage.getItem('novel_width'), savedCurrent = localStorage.getItem('novel_current_id'), savedRaw = localStorage.getItem('novel_raw_emergency');
     if (savedFs) { fsData = JSON.parse(savedFs); } else {
@@ -145,7 +122,6 @@ window.addEventListener('DOMContentLoaded', () => {
 function toggleSidebar() { if (sidebar.style.display === 'none') { sidebar.style.display = 'flex'; mainMenuBtn.style.display = 'none'; } else { sidebar.style.display = 'none'; mainMenuBtn.style.display = 'block'; } setTimeout(changeWidth, 50); }
 function updateLines() { const divs = editor.querySelectorAll('#editor > div'); let count = divs.length === 0 ? 1 : divs.length, html = ''; for(let i=1; i<=count; i++) { html += i + '<br>'; } lineNumbers.innerHTML = html; charCount.textContent = editor.innerText.replace(/\n/g, '').length; }
 
-// マス目のサイズを35pxにガチガチに固定し、文字数に応じて枠だけを動かす100%ズレない新ロジック
 function changeWidth() {
     const val = widthSelect.value;
     if (val === 'max') {
@@ -163,8 +139,7 @@ function changeWidth() {
         document.documentElement.style.setProperty('--editor-width', editorPixelWidth + 'px');
     }
     const currentGrid = document.documentElement.style.getPropertyValue('--cell-size') || '35px';
-    lineNumbers.style.fontSize = `calc(${currentGrid} * 0.45)`;
-    lineNumbers.style.lineHeight = currentGrid;
+    lineNumbers.style.fontSize = `calc(${currentGrid} * 0.45)`; lineNumbers.style.lineHeight = currentGrid;
 }
 function goToParentFolder() { if (currentParentFolderId) { const p = findItem(currentParentFolderId); if (p) alert('「' + p.name + '」に戻りました'); } else { alert('最上層です'); } }
 function copyText() { clearStyle(); navigator.clipboard.writeText(editor.innerText).then(() => alert('コピーしました')); }
