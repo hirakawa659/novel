@@ -50,6 +50,7 @@ body.sp-color-off #e .sp-nonzen{background:transparent!important;border-bottom:n
 <button id="tool_undo" class="tool-item" onclick="document.execCommand('undo')" title="元に戻す">撤</button>
 <button id="tool_redo" class="tool-item" onclick="document.execCommand('redo')" title="やり直す">進</button>
 <button id="tool_copy" class="tool-item" onclick="c()" title="きれいな原稿文章をコピー">複</button>
+<button id="tool_save_txt" class="tool-item" onclick="saveAsTxt()" style="background:#f0fdf4;color:#166534;font-weight:bold;white-space:nowrap" title="現在の話を.txtファイルとして保存">💾 .txt保存</button>
 <button id="tool_fx" class="tool-item" onclick="fx()" style="background:#e0f2fe;color:#0369a1" title="一括修正（英数記号1マス化・誤字修正）">修</button>
 <button id="tool_spcol" class="tool-item" onclick="tgSpColor()" style="background:#fef08a;color:#854d0e;font-weight:bold" title="全角以外の空白の色をON/OFF">空白色:ON</button>
 <button id="tool_hm" class="tool-item" onclick="tgHomoglyphs()" style="background:#fed7aa;color:#9a3412;font-weight:bold" title="紛らわしい類似文字・異言語文字を検出">ホモグラフ</button>
@@ -1030,6 +1031,11 @@ function updateModalContent(id){
         dupBtn.textContent=isFolder?'📋 このフォルダを複製':'📋 この話を複製';
     }
     
+    let saveTxtBtn=document.getElementById('modalSaveTxtBtn');
+    if(saveTxtBtn){
+        saveTxtBtn.textContent=isFolder?'💾 フォルダ内の全話をまとめて.txt保存':'💾 .txtファイルとして保存';
+    }
+    
     let delBtn=document.getElementById('modalDeleteBtn');
     if(delBtn){
         delBtn.textContent=isFolder?'🗑️ このフォルダと中身を削除':'🗑️ この話を削除';
@@ -1430,21 +1436,92 @@ function fx(){
     v();s();
 }
 
-/* 複（コピー）ボタン：画面表示用の箱を消して、本物のきれいな文章に戻してクリップボードに送る設定 */
-function c(){
-    let divs=e.querySelectorAll('#e>div');
+/* テキスト抽出・.txtファイル保存処理 */
+function getStoryPlainText(contentHtml){
+    let wrapper=document.createElement('div');
+    wrapper.innerHTML=contentHtml||'';
+    let divs=wrapper.querySelectorAll('div');
     let lines=[];
-    divs.forEach(d=>{
-        let clone=d.cloneNode(true);
+    if(divs.length>0){
+        divs.forEach(d=>{
+            let clone=d.cloneNode(true);
+            clone.querySelectorAll('.hidden-char-badge').forEach(b=>b.remove());
+            clone.querySelectorAll('.sp-nonzen').forEach(s=>s.replaceWith(s.textContent||' '));
+            clone.querySelectorAll('.sp').forEach(s=>s.replaceWith(' '));
+            let t=clone.innerText.replace(/\r?\n/g,'');
+            lines.push(t);
+        });
+    }else{
+        let clone=wrapper.cloneNode(true);
+        clone.querySelectorAll('.hidden-char-badge').forEach(b=>b.remove());
         clone.querySelectorAll('.sp-nonzen').forEach(s=>s.replaceWith(s.textContent||' '));
         clone.querySelectorAll('.sp').forEach(s=>s.replaceWith(' '));
-        clone.querySelectorAll('.hidden-char-badge').forEach(s=>s.remove());
-        lines.push(clone.innerText.replace(/\r?\n/g,''));
-    });
-    while(lines.length > 1 && lines[lines.length - 1].replace(/[\s\u3000]/g, '') === ''){
+        lines=(clone.innerText||'').split(/\r?\n/);
+    }
+    while(lines.length>1 && lines[lines.length-1].replace(/[\s\u3000]/g,'')===''){
         lines.pop();
     }
-    let t=lines.join('\n');
+    return lines.join('\n');
+}
+
+function downloadTextFile(filename, text){
+    let blob=new Blob([text],{type:'text/plain;charset=utf-8'});
+    let url=URL.createObjectURL(blob);
+    let a=document.createElement('a');
+    a.href=url;
+    a.download=filename;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(()=>URL.revokeObjectURL(url),2000);
+}
+
+function saveAsTxt(){
+    s();
+    let item=g(f);
+    let name=item?(item.name||'第1話'):'小説原稿';
+    let safeName=name.replace(/[\\/:*?"<>|]/g,'_');
+    let text=getStoryPlainText(e.innerHTML);
+    downloadTextFile(safeName+'.txt', text);
+}
+
+function saveModalItemAsTxt(){
+    if(!currentModalItemId)return;
+    let ctx=findItemContext(currentModalItemId);
+    if(!ctx)return;
+    let it=ctx.item;
+    if(it.type==='file'){
+        let text='';
+        if(it.id===f){
+            s();
+            text=getStoryPlainText(e.innerHTML);
+        }else{
+            text=getStoryPlainText(it.content);
+        }
+        let safeName=(it.name||'第1話').replace(/[\\/:*?"<>|]/g,'_');
+        downloadTextFile(safeName+'.txt', text);
+    }else if(it.type==='folder'){
+        let allTexts=[];
+        function walkFolder(folder){
+            if(!folder.children)return;
+            folder.children.forEach(ch=>{
+                if(ch.type==='file'){
+                    let cText=(ch.id===f)?getStoryPlainText(e.innerHTML):getStoryPlainText(ch.content);
+                    allTexts.push(`【${ch.name}】\n\n`+cText);
+                }else if(ch.type==='folder'){
+                    walkFolder(ch);
+                }
+            });
+        }
+        walkFolder(it);
+        let safeName=(it.name||'フォルダ').replace(/[\\/:*?"<>|]/g,'_');
+        downloadTextFile(safeName+'.txt', allTexts.join('\n\n\n--------------------\n\n\n'));
+    }
+}
+
+/* 複（コピー）ボタン：画面表示用の箱を消して、本物のきれいな文章に戻してクリップボードに送る設定 */
+function c(){
+    let t=getStoryPlainText(e.innerHTML);
     navigator.clipboard.writeText(t).then(()=>alert('きれいな小説文章をコピーしました！'));
 }
 
@@ -1548,6 +1625,7 @@ const toolDefs={
     'tool_undo':{name:'撤 (アンドゥ)',desc:'1つ前の操作を取り消す'},
     'tool_redo':{name:'進 (リドゥ)',desc:'取り消した操作をやり直す'},
     'tool_copy':{name:'複 (コピー)',desc:'きれいな小説原稿をクリップボードにコピー'},
+    'tool_save_txt':{name:'💾 .txtファイルとして保存',desc:'現在の話を.txtファイルとしてダウンロード保存'},
     'tool_fx':{name:'修 (一括修正)',desc:'英数記号1マス化・全角空白化・誤字修正'},
     'tool_spcol':{name:'空白色',desc:'空白の強調色ON/OFF'},
     'tool_hm':{name:'ホモグラフ',desc:'紛らわしい類似文字の検出'},
@@ -1556,7 +1634,7 @@ const toolDefs={
     'tool_select':{name:'行文字数設定',desc:'1行あたりの文字数選択 (20〜40字)'},
     'tool_count':{name:'文字数カウンター',desc:'総文字数・空白抜き文字数'}
 };
-const defaultToolOrder=['tool_sb','tool_root','tool_undo','tool_redo','tool_copy','tool_fx','tool_spcol','tool_hm','tool_hd','tool_rep','tool_select','tool_count'];
+const defaultToolOrder=['tool_sb','tool_root','tool_undo','tool_redo','tool_copy','tool_save_txt','tool_fx','tool_spcol','tool_hm','tool_hd','tool_rep','tool_select','tool_count'];
 
 function getToolOrder(){
     let saved=localStorage.getItem('n_tool_order');
@@ -1922,11 +2000,14 @@ if(window.ResizeObserver){
           <button onclick="saveModalRename()" style="background:#2563eb;color:#fff;border:none;border-radius:4px;padding:6px 12px;font-size:12px;cursor:pointer;font-weight:bold">保存</button>
         </div>
       </div>
-      <!-- 操作（複製・並び順） -->
+      <!-- 操作（保存・複製・並び順） -->
       <div class="modal-section">
-        <div class="modal-sec-title">複製・並び順</div>
-        <div style="display:flex;gap:6px">
-          <button id="modalDuplicateBtn" onclick="duplicateModalItem()" style="flex:1;background:#f0fdf4;border:1px solid #86efac;color:#166534;padding:7px 8px;border-radius:5px;font-size:12px;display:flex;align-items:center;justify-content:center;gap:4px;font-weight:bold;cursor:pointer">
+        <div class="modal-sec-title">操作・保存</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button id="modalSaveTxtBtn" onclick="saveModalItemAsTxt()" style="width:100%;background:#f0fdf4;border:1px solid #86efac;color:#166534;padding:8px;border-radius:5px;font-size:12px;display:flex;align-items:center;justify-content:center;gap:6px;font-weight:bold;cursor:pointer">
+            💾 .txtファイルとして保存
+          </button>
+          <button id="modalDuplicateBtn" onclick="duplicateModalItem()" style="width:100%;background:#f8fafc;border:1px solid #cbd5e1;color:#1e293b;padding:7px 8px;border-radius:5px;font-size:12px;display:flex;align-items:center;justify-content:center;gap:4px;font-weight:bold;cursor:pointer">
             📋 この話を複製
           </button>
         </div>
