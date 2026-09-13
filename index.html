@@ -115,27 +115,43 @@ window.onload=()=>{
         if(!d||!d.r)return;
         function walkItems(items){
             items.forEach(it=>{
-                if(it.content&&it.content.includes('sp-nonzen')){
+                let changed=false;
+                if(it.content){
                     let tmp=document.createElement('div');
                     tmp.innerHTML=it.content;
-                    let badSpans=tmp.querySelectorAll('.sp-nonzen');
-                    let changed=false;
-                    badSpans.forEach(sp=>{
-                        let txt=sp.textContent||'';
-                        if(/[^\s\u00A0]/.test(txt)||txt===''||txt==='\n'){
-                            changed=true;
-                            let p=sp.parentNode;
-                            if(p){
-                                if(txt===''||txt==='\n'){
-                                    while(sp.firstChild)p.insertBefore(sp.firstChild,sp);
-                                    p.removeChild(sp);
-                                }else{
-                                    p.replaceChild(document.createTextNode(txt),sp);
+                    if(it.content.includes('sp-nonzen')){
+                        let badSpans=tmp.querySelectorAll('.sp-nonzen');
+                        badSpans.forEach(sp=>{
+                            let txt=sp.textContent||'';
+                            if(/[^\s\u00A0]/.test(txt)||txt===''||txt==='\n'){
+                                changed=true;
+                                let p=sp.parentNode;
+                                if(p){
+                                    if(txt===''||txt==='\n'){
+                                        while(sp.firstChild)p.insertBefore(sp.firstChild,sp);
+                                        p.removeChild(sp);
+                                    }else{
+                                        p.replaceChild(document.createTextNode(txt),sp);
+                                    }
                                 }
                             }
+                        });
+                    }
+                    // 先頭に溜まった2行以上の不要な空白行（長文貼り付け時の空行問題）を解消
+                    let divs=tmp.querySelectorAll('div');
+                    let firstContentIdx=-1;
+                    for(let i=0;i<divs.length;i++){
+                        let t=divs[i].textContent.replace(/[\s\u3000\r\n]/g,'');
+                        if(t.length>0||divs[i].querySelector('.sub-sup, .hidden-char-badge, .hm-mark, img')){
+                            firstContentIdx=i;
+                            break;
                         }
-                    });
-                    if(changed)it.content=tmp.innerHTML;
+                    }
+                    if(firstContentIdx>=2){
+                        for(let i=0;i<firstContentIdx;i++) divs[i].remove();
+                        changed=true;
+                    }
+                    if(changed) it.content=tmp.innerHTML;
                 }
                 if(it.children)walkItems(it.children);
             });
@@ -156,8 +172,26 @@ window.onload=()=>{
     initToolDragAndDrop();
     norm();cleanSpans();autoFormatEditor();highlightSpaces();z();v();
 };
-function cleanExcessiveBlankLines(){
-    // 空行の勝手な自動削除は行わない（ユーザーが意図して空行や空白マスにカーソルを置いて執筆するのを妨げない）
+function cleanExcessiveLeadingLines(root = e){
+    let divs = root.querySelectorAll('#e>div');
+    if(divs.length === 0) divs = root.querySelectorAll('div');
+    if(divs.length <= 1) return;
+    let firstContentIdx = -1;
+    for(let i = 0; i < divs.length; i++){
+        let t = divs[i].textContent.replace(/[\s\u3000\r\n]/g, '');
+        if(t.length > 0 || divs[i].querySelector('.sub-sup, .hidden-char-badge, .hm-mark, img')){
+            firstContentIdx = i;
+            break;
+        }
+    }
+    if(firstContentIdx >= 2){
+        for(let i = 0; i < firstContentIdx; i++){
+            divs[i].remove();
+        }
+    }
+}
+function cleanExcessiveBlankLines(root = e){
+    cleanExcessiveLeadingLines(root);
 }
 function cleanContaminatedSpans(){
     let nonzens = e.querySelectorAll('.sp-nonzen');
@@ -569,13 +603,19 @@ function getEditorPureTextFromElement(el){
     if(divs.length===0)divs=el.querySelectorAll('div');
     let lines=[];
     if(divs.length>0){
-        divs.forEach(d=>{
-            let clone=d.cloneNode(true);
-            clone.querySelectorAll('.hidden-char-badge').forEach(b=>b.remove());
-            clone.querySelectorAll('.sp-nonzen').forEach(s=>s.replaceWith(s.textContent||' '));
-            let t=clone.textContent||'';
-            lines.push(t.replace(/[\r\n]/g,''));
-        });
+        for(let i=0; i<divs.length; i++){
+            let d=divs[i];
+            if(!d.firstElementChild || (d.firstElementChild.tagName==='BR' && d.children.length===1)){
+                let t=d.textContent||'';
+                lines.push(t.replace(/[\r\n]/g,''));
+            }else{
+                let clone=d.cloneNode(true);
+                clone.querySelectorAll('.hidden-char-badge').forEach(b=>b.remove());
+                clone.querySelectorAll('.sp-nonzen').forEach(s=>s.replaceWith(s.textContent||' '));
+                let t=clone.textContent||'';
+                lines.push(t.replace(/[\r\n]/g,''));
+            }
+        }
     }else{
         let clone=el.cloneNode(true);
         clone.querySelectorAll('.hidden-char-badge').forEach(b=>b.remove());
@@ -613,30 +653,14 @@ function countCharsFromLines(lines){
 }
 
 function ensureGridLines(){
-    let cs=parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--cs'))||32;
-    let mCont=document.querySelector('.m');
-    let mHeight=mCont?mCont.clientHeight:(window.innerHeight||800);
-    let sTop=mCont?mCont.scrollTop:0;
-    // スクロール底面＋画面約1.5倍の余裕を持たせて常に下方にマス目が続くようにする
-    let scrollBottom = sTop + mHeight + (mHeight * 1.5);
-    let editorHeight=Math.max(e.clientHeight||0, w.clientHeight||0, scrollBottom);
-    let targetCount=Math.max(1, Math.floor(editorHeight/cs));
-    
     let divs=e.querySelectorAll('#e>div');
     if(divs.length===0){
         e.innerHTML='<div><br></div>';
-        divs=e.querySelectorAll('#e>div');
-    }
-    if(divs.length < targetCount){
-        let frag=document.createDocumentFragment();
-        for(let i=divs.length; i<targetCount; i++){
-            let nd=document.createElement('div');
-            nd.innerHTML='<br>';
-            frag.appendChild(nd);
-        }
-        e.appendChild(frag);
     }
 }
+
+let lastRenderedVisibleLines = -1;
+let lastRenderedActiveLine = -1;
 
 function v(){
     ensureGridLines();
@@ -657,29 +681,42 @@ function v(){
     
     // 実際に文字または空白マス目がある最終行を判定（黒字と薄いグレーの切り替え）
     let lastActiveLine = 0;
-    divs.forEach((d, idx)=>{
-        let txt = d.innerText.replace(/[\r\n]/g,'');
+    for(let i=divs.length-1; i>=0; i--){
+        let d = divs[i];
+        let txt = d.textContent.replace(/[\r\n]/g,'');
         if(txt.length > 0 || d.querySelector('.sub-sup, .hidden-char-badge, .hm-mark, img')){
-            lastActiveLine = idx + 1;
-        }
-    });
-    if(lastActiveLine === 0) lastActiveLine = 1;
-    
-    let h='';
-    for(let i=1;i<=visibleGridLines;i++){
-        if(i<=lastActiveLine){
-            h+=i+'<br>';
-        }else{
-            h+=`<span style="color:#cbd5e1;font-size:10px">${i}</span><br>`;
+            lastActiveLine = i + 1;
+            break;
         }
     }
-    n.innerHTML=h;
+    if(lastActiveLine === 0) lastActiveLine = 1;
+    
+    if(visibleGridLines !== lastRenderedVisibleLines || lastActiveLine !== lastRenderedActiveLine){
+        lastRenderedVisibleLines = visibleGridLines;
+        lastRenderedActiveLine = lastActiveLine;
+        let h='';
+        for(let i=1;i<=visibleGridLines;i++){
+            if(i<=lastActiveLine){
+                h+=i+'<br>';
+            }else{
+                h+=`<span style="color:#cbd5e1;font-size:10px">${i}</span><br>`;
+            }
+        }
+        n.innerHTML=h;
+    }
     
     let pureLines=getEditorPureTextFromElement(e);
     let st=countCharsFromLines(pureLines);
     // デフォルト表示はスペースなし（空白除外）文字数をメインに
     k.innerHTML=`<span style="font-weight:bold">${st.withoutSpaces.toLocaleString()}字</span><span style="font-size:10px;color:#64748b;margin-left:4px;font-weight:normal">(空白込${st.totalChars.toLocaleString()})</span>`;
     k.title=`【文字数カウンター】\n文字数（空白なし・デフォルト）: ${st.withoutSpaces.toLocaleString()}字\n総文字数（空白込み）: ${st.totalChars.toLocaleString()}字\n行数: ${st.lines}行`;
+    
+    if(f){
+        let curBadge=document.querySelector(`.tree-row[data-id="${f}"] .tree-badge`);
+        if(curBadge){
+            curBadge.textContent=st.withoutSpaces.toLocaleString()+'字';
+        }
+    }
 }
 function o(id){
     let i=g(id);
@@ -790,6 +827,7 @@ function m(i,pid){
     let isCurrentFile=(i.id===f);
     let isCurrentTarget=(i.id===pId);
     row.className='tree-row'+(isCurrentFile?' active':'')+(isCurrentTarget?' folder-active':'');
+    row.dataset.id=i.id;
     
     let titleBtn=document.createElement('button');
     titleBtn.className='tree-title-btn';
@@ -1408,6 +1446,7 @@ function doRep(isAll){
 
 /* 【修】ボタン：半角空白の全角化（1マス化・カーソル跳ね防止）、英数記号の全角化、下つき添え字固定、誤字チェックを一括実行 */
 function fx(){
+    cleanExcessiveLeadingLines();
     norm();
     let divs=e.querySelectorAll('#e>div');if(divs.length===0){e.innerHTML='<div>'+e.innerHTML+'</div>';divs=e.querySelectorAll('#e>div')}
     divs.forEach(d=>{
@@ -1621,10 +1660,140 @@ e.addEventListener('blur',()=>{
     v();
     s();
 });
-e.addEventListener('paste',()=>{
-    setTimeout(()=>{
-        norm();cleanSpans();autoFormatEditor();highlightSpaces();v();s();localStorage.setItem('n_r',e.innerHTML);sc();
-    },30);
+e.addEventListener('paste', (ev)=>{
+    ev.preventDefault();
+    let text = (ev.clipboardData || window.clipboardData)?.getData('text/plain') || '';
+    if(!text) return;
+    
+    text = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    
+    // 現在のエディタが実質空（空白のみ、または初期の空行のみ）か確認
+    let currentPure = getEditorPureTextFromElement(e).join('').trim();
+    let isDocEmpty = (currentPure.length === 0);
+    
+    if(isDocEmpty){
+        // 先頭の不要な連続改行をトリムして1行目から綺麗に配置
+        text = text.replace(/^\n+/, '');
+        let lines = text.split('\n');
+        let frag = document.createDocumentFragment();
+        lines.forEach(lineText => {
+            let d = document.createElement('div');
+            if(lineText){
+                d.textContent = lineText;
+            } else {
+                d.innerHTML = '<br>';
+            }
+            frag.appendChild(d);
+        });
+        e.innerHTML = '';
+        e.appendChild(frag);
+        
+        let lastDiv = e.lastElementChild;
+        if(lastDiv){
+            let sel = window.getSelection();
+            if(sel){
+                let range = document.createRange();
+                range.selectNodeContents(lastDiv);
+                range.collapse(false);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        }
+    } else {
+        let sel = window.getSelection();
+        if(!sel || sel.rangeCount === 0){
+            let lines = text.split('\n');
+            let frag = document.createDocumentFragment();
+            lines.forEach(lineText => {
+                let d = document.createElement('div');
+                if(lineText) d.textContent = lineText;
+                else d.innerHTML = '<br>';
+                frag.appendChild(d);
+            });
+            e.appendChild(frag);
+        } else {
+            let range = sel.getRangeAt(0);
+            range.deleteContents();
+            let lines = text.split('\n');
+            if(lines.length === 1){
+                let tn = document.createTextNode(lines[0]);
+                range.insertNode(tn);
+                range.setStartAfter(tn);
+                range.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            } else {
+                let node = range.startContainer;
+                while(node && node.parentElement !== e && node !== e){
+                    node = node.parentElement;
+                }
+                let curDiv = (node && node.parentElement === e) ? node : e.firstElementChild;
+                let curText = curDiv ? curDiv.textContent.replace(/[\r\n]/g, '') : '';
+                if(!curText){
+                    curDiv.textContent = lines[0] || '';
+                    if(!lines[0]) curDiv.innerHTML = '<br>';
+                    let nextSibling = curDiv.nextSibling;
+                    let lastInserted = curDiv;
+                    for(let i = 1; i < lines.length; i++){
+                        let nd = document.createElement('div');
+                        if(lines[i]) nd.textContent = lines[i];
+                        else nd.innerHTML = '<br>';
+                        e.insertBefore(nd, nextSibling);
+                        lastInserted = nd;
+                    }
+                    let selRange = document.createRange();
+                    selRange.selectNodeContents(lastInserted);
+                    selRange.collapse(false);
+                    sel.removeAllRanges();
+                    sel.addRange(selRange);
+                } else {
+                    let preRange = range.cloneRange();
+                    preRange.selectNodeContents(curDiv);
+                    preRange.setEnd(range.startContainer, range.startOffset);
+                    let preText = preRange.toString();
+                    
+                    let postRange = range.cloneRange();
+                    postRange.selectNodeContents(curDiv);
+                    postRange.setStart(range.endContainer, range.endOffset);
+                    let postText = postRange.toString();
+                    
+                    curDiv.textContent = preText + lines[0];
+                    let nextSibling = curDiv.nextSibling;
+                    let lastInserted = curDiv;
+                    for(let i = 1; i < lines.length - 1; i++){
+                        let nd = document.createElement('div');
+                        if(lines[i]) nd.textContent = lines[i];
+                        else nd.innerHTML = '<br>';
+                        e.insertBefore(nd, nextSibling);
+                        lastInserted = nd;
+                    }
+                    let endDiv = document.createElement('div');
+                    let endText = lines[lines.length - 1] + postText;
+                    if(endText) endDiv.textContent = endText;
+                    else endDiv.innerHTML = '<br>';
+                    e.insertBefore(endDiv, nextSibling);
+                    lastInserted = endDiv;
+                    
+                    let selRange = document.createRange();
+                    if(endDiv.firstChild && endDiv.firstChild.nodeType === 3){
+                        selRange.setStart(endDiv.firstChild, lines[lines.length - 1].length);
+                    } else {
+                        selRange.selectNodeContents(endDiv);
+                        selRange.collapse(false);
+                    }
+                    sel.removeAllRanges();
+                    sel.addRange(selRange);
+                }
+            }
+        }
+    }
+    
+    cleanExcessiveLeadingLines();
+    v();
+    s();
+    localStorage.setItem('n_r', e.innerHTML);
+    scheduleFormat();
+    sc();
 });
 
 /* ツールバーの並び替え機能 */
@@ -1809,13 +1978,13 @@ function resetToolOrder(){
     renderOrderList();
 }
 window.addEventListener('scroll',()=>{if(window.scrollY!==0||window.scrollX!==0)window.scrollTo(0,0)});
-e.addEventListener('focus',()=>{setTimeout(()=>{window.scrollTo(0,0);sc()},50)});
+e.addEventListener('focus',()=>{setTimeout(()=>{window.scrollTo(0,0);},50)});
 
 /* マス目やエディタ領域をクリック・タップした時のカーソル配置処理 */
 function applyCaretToDiv(targetDiv, targetCol, maxCols){
     if(!targetDiv) return;
     targetCol = Math.min(targetCol, maxCols);
-    let lineText = targetDiv.innerText.replace(/\r?\n/g,'');
+    let lineText = targetDiv.textContent.replace(/\r?\n/g,'');
     let sel = window.getSelection();
     if(!sel) return;
     let range = document.createRange();
@@ -1825,21 +1994,19 @@ function applyCaretToDiv(targetDiv, targetCol, maxCols){
         if(targetCol > 0){
             // 指定のマス目（targetCol）まで全角スペースで埋めてカーソルを配置
             let pad = '　'.repeat(targetCol);
-            targetDiv.innerHTML = pad + '<br>';
-            let tn = targetDiv.firstChild;
-            if(tn && tn.nodeType === 3){
-                range.setStart(tn, targetCol);
-            } else {
-                range.selectNodeContents(targetDiv);
-                range.collapse(false);
-            }
+            let tn = document.createTextNode(pad);
+            targetDiv.innerHTML = '';
+            targetDiv.appendChild(tn);
+            targetDiv.appendChild(document.createElement('br'));
+            range.setStart(tn, targetCol);
+            range.collapse(true);
         } else {
             let br = targetDiv.querySelector('br');
             if(!br){
                 targetDiv.innerHTML = '<br>';
             }
             range.setStart(targetDiv, 0);
-            range.setEnd(targetDiv, 0);
+            range.collapse(true);
         }
     } else {
         // すでに文字がある行の場合
@@ -1855,13 +2022,13 @@ function applyCaretToDiv(targetDiv, targetCol, maxCols){
                 targetDiv.appendChild(tn);
             }
             range.setStart(tn, padCount);
+            range.collapse(true);
         } else {
             // 文字の存在するマス目をクリック：その文字の位置へ
             setCaretCharOffset(targetDiv, targetCol);
             return;
         }
     }
-    range.collapse(true);
     sel.removeAllRanges();
     sel.addRange(range);
 }
@@ -1984,12 +2151,6 @@ function handleCellClick(ev){
             e.focus();
         }
         applyCaretToDiv(targetDiv, targetCol, maxCols);
-        // iOS Safari等の仮想キーボード展開時やタップ直後のカーソル外れ防止
-        setTimeout(()=>{
-            if(document.activeElement === e){
-                applyCaretToDiv(targetDiv, targetCol, maxCols);
-            }
-        }, 15);
         v();
         s();
     }
@@ -1997,6 +2158,18 @@ function handleCellClick(ev){
 e.addEventListener('mousedown',()=>{ if(document.activeElement !== e) e.focus(); });
 e.addEventListener('click',(ev)=>{
     if(touchHandled && (Date.now() - (lastTouchPos?.time || 0) < 500)) return;
+    let closestDiv = ev.target.closest('#e>div');
+    if(closestDiv){
+        let lineText = closestDiv.textContent.replace(/[\r\n]/g, '');
+        let cs = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--cs')) || 32;
+        let rect = e.getBoundingClientRect();
+        let padLeft = cs * 0.11;
+        let clickCol = Math.floor((ev.clientX - rect.left - padLeft) / cs);
+        if(clickCol < lineText.length && ev.target !== e){
+            v();
+            return;
+        }
+    }
     handleCellClick(ev);
 });
 w.addEventListener('click',(ev)=>{
@@ -2013,14 +2186,14 @@ if(mContainer){
             handleCellClick(ev);
         }
     });
+    let scrollRaf = null;
     mContainer.addEventListener('scroll',()=>{
-        ensureGridLines();
-        v();
+        if(scrollRaf) return;
+        scrollRaf = requestAnimationFrame(()=>{
+            scrollRaf = null;
+            v();
+        });
     },{passive:true});
-}
-if(window.visualViewport){
-    window.visualViewport.addEventListener('resize',()=>{window.scrollTo(0,0)});
-    window.visualViewport.addEventListener('scroll',()=>{window.scrollTo(0,0)});
 }
 window.addEventListener('resize',()=>{z();window.scrollTo(0,0)});
 if(window.ResizeObserver){
