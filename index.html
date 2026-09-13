@@ -6,7 +6,7 @@ button{padding:6px 10px;font-size:12px;font-weight:bold;cursor:pointer;backgroun
 #b{display:flex;position:fixed;top:50px;bottom:0;left:0;right:0;width:100%;height:calc(100% - 50px);height:calc(100dvh - 50px);overflow:hidden}
 #s{width:200px;background:#f0f0f4;border-right:1px solid #ddd;padding:8px;display:flex;flex-direction:column;gap:4px;flex-shrink:0}
 .m{flex:1;padding:12px;padding-bottom:75vh;overflow-y:auto;overflow-x:hidden;box-sizing:border-box;display:flex;justify-content:center;-webkit-overflow-scrolling:touch}
-#w{display:flex;background:#fff;border:1px solid #ddd;border-radius:6px;min-height:500px;box-sizing:border-box;flex-shrink:0;margin:0 auto}
+#w{display:flex;background:#fff;box-sizing:border-box;flex-shrink:0;margin:0 auto}
 .l{width:36px;border-right:1px solid #eee;padding:12px 0;text-align:right;font-size:12px;color:#aaa;padding-right:6px;user-select:none;flex-shrink:0;box-sizing:border-box;line-height:var(--cs)!important}
 #e{flex-grow:1;padding:12px 0;outline:0;white-space:pre-wrap;word-wrap:break-word;word-break:break-all;display:block!important;box-sizing:border-box;font-size:var(--cs)!important;line-height:var(--cs)!important;letter-spacing:0px!important;text-align:left!important;caret-color:#2563eb;background-image:linear-gradient(90deg,#ececec 1px,transparent 1px),linear-gradient(#ececec 1px,transparent 1px)!important;background-size:var(--cs) var(--cs)!important;background-repeat:repeat!important;background-position:0 12px!important}
 #e div{min-height:var(--cs)!important;display:block!important;box-sizing:border-box;text-align:left!important;background-image:linear-gradient(90deg,#ececec 1px,transparent 1px),linear-gradient(#ececec 1px,transparent 1px)!important;background-size:var(--cs) var(--cs)!important;background-repeat:repeat!important;width:100%!important;margin:0;padding:0}
@@ -18,13 +18,14 @@ button{padding:6px 10px;font-size:12px;font-weight:bold;cursor:pointer;backgroun
 </style></head>
 <body>
 <div class="h">
+<button id="sbBtn" onclick="tgS()" title="フォルダ開閉" style="background:#e0e7ff;color:#1e3a8a">📁 フォルダ</button>
 <button onclick="u()">戻</button><button onclick="document.execCommand('undo')">撤</button><button onclick="document.execCommand('redo')">進</button>
 <button onclick="c()">複</button><button onclick="fx()" style="background:#e0f2fe;color:#0369a1">修</button>
 <select id="l" onchange="z()"></select><span id="k" style="font-size:13px;margin-left:5px">0字</span>
 </div>
 <div id="b">
 <div id="s">
-<div style="display:flex;gap:4px"><button onclick="a(1)" style="flex:1">+折</button><button onclick="a(0)" style="flex:1">+話</button></div><div id="t"></div>
+<div style="display:flex;gap:4px;margin-bottom:4px"><button onclick="a(1)" style="flex:2;font-size:11px;white-space:nowrap;padding:6px 4px">+新規フォルダ</button><button onclick="a(0)" style="flex:1;font-size:11px;white-space:nowrap;padding:6px 4px">+話</button><button onclick="tgS()" title="閉じる" style="padding:6px 8px">◀</button></div><div id="t"></div>
 </div>
 <div class="m"><div id="w"><div class="l" id="n">1</div><div id="e" contenteditable="true"><div><br></div></div></div></div>
 </div>
@@ -51,17 +52,25 @@ function norm(){
         e.innerHTML=lines.map(l=>`<div>${l?l:'<br>'}</div>`).join('');
     }
 }
+function tgS(){
+    const s=document.getElementById('s');
+    const isHidden=(s.style.display==='none');
+    s.style.display=isHidden?'flex':'none';
+    const btn=document.getElementById('sbBtn');
+    if(btn)btn.style.background=isHidden?'#e0e7ff':'#f0f0f2';
+    setTimeout(()=>{z()},30);
+}
 function z(){
     let v=l.value;let num=parseInt(v);if(!num||isNaN(num))num=30;
     const m=document.querySelector('.m');
     const mWidth=m?m.clientWidth:(window.innerWidth-200);
-    const pad=24,lw=36,border=2;
-    let avail=mWidth-pad-lw-border;
+    const pad=24,lw=36;
+    let avail=mWidth-pad-lw;
     if(avail<100)avail=100;
     let cs=Math.floor(avail/num);
     if(cs<12)cs=12;if(cs>64)cs=64;
     const pw=cs*num;
-    const totalW=pw+lw+border;
+    const totalW=pw+lw;
     document.documentElement.style.setProperty('--cs',cs+'px');
     w.style.width=totalW+'px';
     e.style.width=pw+'px';
