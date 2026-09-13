@@ -13,6 +13,7 @@ button{padding:6px 10px;font-size:12px;font-weight:bold;cursor:pointer;backgroun
 #e span{display:inline;margin:0;padding:0;box-sizing:border-box}
 .sub-sup{display:inline-block!important;width:calc(var(--cs)*0.78)!important;height:calc(var(--cs)*0.78)!important;line-height:calc(var(--cs)*0.78)!important;letter-spacing:0!important;text-align:center!important;box-sizing:border-box!important;margin:0!important;margin-right:calc(var(--cs)*0.22)!important;padding:0!important;font-size:calc(var(--cs)*0.65)!important;vertical-align:middle!important;background:#e0e7ff!important;color:#1e3a8a!important;border-radius:2px!important;user-select:all}
 .sp-nonzen{display:inline!important;background:#fef08a!important;color:inherit!important;border-bottom:2px solid #f59e0b!important;border-radius:2px!important;white-space:pre!important;box-sizing:border-box;font-size:inherit!important;letter-spacing:inherit!important}
+.sp-nonzen:empty{display:none!important}
 body.sp-color-off #e .sp-nonzen{background:transparent!important;border-bottom:none!important}
 .sp{background:#e4e4e7!important;color:#71717a!important;border-radius:2px}
 .hm-mark{background:#ffedd5!important;border-bottom:2px solid #ea580c!important;color:#c2410c!important;font-weight:bold!important;border-radius:2px}
@@ -108,6 +109,39 @@ window.onload=()=>{
             f=findFirst(d.r)||d.r[0].id;
         }
     }
+    function cleanAllStoriesInStorage(){
+        if(!d||!d.r)return;
+        function walkItems(items){
+            items.forEach(it=>{
+                if(it.content&&it.content.includes('sp-nonzen')){
+                    let tmp=document.createElement('div');
+                    tmp.innerHTML=it.content;
+                    let badSpans=tmp.querySelectorAll('.sp-nonzen');
+                    let changed=false;
+                    badSpans.forEach(sp=>{
+                        let txt=sp.textContent||'';
+                        if(/[^\s\u00A0]/.test(txt)||txt===''||txt==='\n'){
+                            changed=true;
+                            let p=sp.parentNode;
+                            if(p){
+                                if(txt===''||txt==='\n'){
+                                    while(sp.firstChild)p.insertBefore(sp.firstChild,sp);
+                                    p.removeChild(sp);
+                                }else{
+                                    p.replaceChild(document.createTextNode(txt),sp);
+                                }
+                            }
+                        }
+                    });
+                    if(changed)it.content=tmp.innerHTML;
+                }
+                if(it.children)walkItems(it.children);
+            });
+        }
+        walkItems(d.r);
+        localStorage.setItem('n_d',JSON.stringify(d));
+    }
+    cleanAllStoriesInStorage();
     if(sw)l.value=sw;
     r();
     o(f);
@@ -160,6 +194,45 @@ function cleanExcessiveBlankLines(){
         }
     }
 }
+function cleanContaminatedSpans(){
+    let nonzens = e.querySelectorAll('.sp-nonzen');
+    if(nonzens.length === 0) return;
+    let sel = window.getSelection();
+    let curContainer = (sel && sel.rangeCount > 0) ? sel.getRangeAt(0).startContainer : null;
+    let curOffset = (sel && sel.rangeCount > 0) ? sel.getRangeAt(0).startOffset : 0;
+    
+    nonzens.forEach(sp => {
+        let txt = sp.textContent || '';
+        let hasNonSpace = /[^\s\u00A0]/.test(txt);
+        let isEmpty = (txt === '' || txt === '\n');
+        if(!hasNonSpace && !isEmpty) return;
+        
+        let isCursorInside = curContainer && sp.contains(curContainer);
+        let p = sp.parentNode;
+        if(!p) return;
+        
+        if(isEmpty){
+            while(sp.firstChild){
+                p.insertBefore(sp.firstChild, sp);
+            }
+            p.removeChild(sp);
+        } else {
+            let tn = document.createTextNode(txt);
+            p.replaceChild(tn, sp);
+            if(isCursorInside){
+                try{
+                    let newRange = document.createRange();
+                    let safeOffset = Math.min(curOffset, txt.length);
+                    newRange.setStart(tn, safeOffset);
+                    newRange.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(newRange);
+                }catch(err){}
+            }
+        }
+    });
+}
+
 function cleanSpans(){
     let charBoxes=e.querySelectorAll('.char-box');
     charBoxes.forEach(s=>{
@@ -167,13 +240,8 @@ function cleanSpans(){
         while(s.firstChild)p.insertBefore(s.firstChild,s);
         p.removeChild(s);
     });
-    let nonzen=e.querySelectorAll('.sp-nonzen');
-    nonzen.forEach(s=>{
-        let txt=s.textContent||'';
-        // 空白以外の文字が入っていたら確実にテキストに戻す
-        s.replaceWith(txt);
-    });
-    let spans=e.querySelectorAll('span:not(.sub-sup):not(.hidden-char-badge):not(.hm-mark):not(.er)');
+    cleanContaminatedSpans();
+    let spans=e.querySelectorAll('span:not(.sub-sup):not(.hidden-char-badge):not(.hm-mark):not(.er):not(.sp-nonzen)');
     spans.forEach(s=>{
         let p=s.parentNode;
         while(s.firstChild)p.insertBefore(s.firstChild,s);
@@ -300,18 +368,8 @@ function setCaretCharOffset(lineEl,targetOffset){
 // 全角スペース以外のスペース（半角スペースやタブ等）に背景色を付ける
 // 「␣」等の記号は絶対に使わず、元のスペース文字そのままで表示
 function highlightSpaces(optActiveLine, optActiveOffset){
-    // まず既存の .sp-nonzen を検査し、空白以外の文字が含まれていたら即座に解除（黄色文字化の根本防止）
-    let existingSpans = e.querySelectorAll('.sp-nonzen');
-    let hadCleaned = false;
-    existingSpans.forEach(sp => {
-        let txt = sp.textContent || '';
-        // 空白文字（半角スペース、タブ、ノーブレークスペース等）以外の文字が含まれている場合
-        if (/[^\s\u00A0]/.test(txt)) {
-            hadCleaned = true;
-            let tn = document.createTextNode(txt);
-            sp.parentNode.replaceChild(tn, sp);
-        }
-    });
+    // 既存の .sp-nonzen を検査し、空白以外の文字や空spanを即座に安全解除（黄色文字化の根本防止）
+    cleanContaminatedSpans();
 
     if (document.body.classList.contains('sp-color-off')) return;
 
@@ -548,14 +606,14 @@ function getEditorPureTextFromElement(el){
         divs.forEach(d=>{
             let clone=d.cloneNode(true);
             clone.querySelectorAll('.hidden-char-badge').forEach(b=>b.remove());
-            clone.querySelectorAll('.sp-nonzen').forEach(s=>s.replaceWith(' '));
+            clone.querySelectorAll('.sp-nonzen').forEach(s=>s.replaceWith(s.textContent||' '));
             let t=clone.textContent||'';
             lines.push(t.replace(/[\r\n]/g,''));
         });
     }else{
         let clone=el.cloneNode(true);
         clone.querySelectorAll('.hidden-char-badge').forEach(b=>b.remove());
-        clone.querySelectorAll('.sp-nonzen').forEach(s=>s.replaceWith(' '));
+        clone.querySelectorAll('.sp-nonzen').forEach(s=>s.replaceWith(s.textContent||' '));
         let t=clone.textContent||'';
         lines=t.split(/[\r\n]+/);
     }
@@ -1004,6 +1062,112 @@ function updateModalContent(id){
     if(addSec){
         addSec.style.display=isFolder?'block':'none';
     }
+    let repSec=document.getElementById('modalFolderReplaceSection');
+    if(repSec){
+        repSec.style.display=isFolder?'block':'none';
+        let msgEl=document.getElementById('modalFolderRepMsg');
+        if(msgEl) msgEl.textContent='';
+    }
+}
+
+function execFolderBatchReplace(){
+    if(!currentModalItemId) return;
+    let ctx=findItemContext(currentModalItemId);
+    if(!ctx||ctx.item.type!=='folder') return;
+    
+    let fInput=document.getElementById('modalFolderRepFrom');
+    let tInput=document.getElementById('modalFolderRepTo');
+    let msgEl=document.getElementById('modalFolderRepMsg');
+    
+    let fVal=fInput?fInput.value:'';
+    let tVal=tInput?tInput.value:'';
+    
+    if(!fVal){
+        if(msgEl){
+            msgEl.textContent='検索文字列を入力してください。';
+            msgEl.style.color='#dc2626';
+        }
+        return;
+    }
+    
+    // 現在編集中（開いている話）の最新状態を同期
+    s();
+    
+    let escaped=fVal.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    let regex=new RegExp(escaped, 'g');
+    
+    let totalReplacedCount=0;
+    let changedFilesCount=0;
+    
+    function replaceInHTML(html){
+        let wrapper=document.createElement('div');
+        wrapper.innerHTML=html||'';
+        let divs=wrapper.querySelectorAll('div');
+        let fileRepCount=0;
+        
+        if(divs.length>0){
+            divs.forEach(d=>{
+                let txt=d.innerText;
+                if(regex.test(txt)){
+                    let matches=txt.match(regex);
+                    if(matches) fileRepCount+=matches.length;
+                    let newText=txt.replace(regex, tVal);
+                    d.innerHTML=newText?newText:'<br>';
+                }
+            });
+        }else{
+            let txt=wrapper.innerText;
+            if(regex.test(txt)){
+                let matches=txt.match(regex);
+                if(matches) fileRepCount+=matches.length;
+                let newText=txt.replace(regex, tVal);
+                wrapper.innerHTML=newText?`<div>${newText}</div>`:'<div><br></div>';
+            }
+        }
+        return {
+            newHtml: wrapper.innerHTML,
+            count: fileRepCount
+        };
+    }
+    
+    function processFolderItems(items){
+        items.forEach(it=>{
+            if(it.type==='file'){
+                let rawContent=(it.id===f)?e.innerHTML:(it.content||'<div><br></div>');
+                let res=replaceInHTML(rawContent);
+                if(res.count>0){
+                    totalReplacedCount+=res.count;
+                    changedFilesCount++;
+                    it.content=res.newHtml;
+                    if(it.id===f){
+                        e.innerHTML=res.newHtml;
+                    }
+                }
+            }else if(it.children){
+                processFolderItems(it.children);
+            }
+        });
+    }
+    
+    if(ctx.item.children){
+        processFolderItems(ctx.item.children);
+    }
+    
+    if(totalReplacedCount>0){
+        s();
+        r();
+        v();
+        updateModalContent(currentModalItemId);
+        if(msgEl){
+            msgEl.textContent=`${changedFilesCount}話中、計${totalReplacedCount}箇所を置換しました！`;
+            msgEl.style.color='#16a34a';
+        }
+    }else{
+        if(msgEl){
+            msgEl.textContent='該当する文字列は見つかりませんでした。';
+            msgEl.style.color='#64748b';
+        }
+    }
 }
 
 function modalAddFileInCurrentFolder(){
@@ -1231,7 +1395,7 @@ function fx(){
     let divs=e.querySelectorAll('#e>div');if(divs.length===0){e.innerHTML='<div>'+e.innerHTML+'</div>';divs=e.querySelectorAll('#e>div')}
     divs.forEach(d=>{
         let clone=d.cloneNode(true);
-        clone.querySelectorAll('.sp-nonzen').forEach(s=>s.replaceWith(' '));
+        clone.querySelectorAll('.sp-nonzen').forEach(s=>s.replaceWith(s.textContent||' '));
         clone.querySelectorAll('.char-box').forEach(s=>{
             let p=s.parentNode;while(s.firstChild)p.insertBefore(s.firstChild,s);p.removeChild(s);
         });
@@ -1304,7 +1468,36 @@ let isComposing=false;
 e.addEventListener('compositionstart',()=>{isComposing=true;});
 e.addEventListener('compositionend',()=>{
     isComposing=false;
+    cleanContaminatedSpans();
     scheduleFormat();
+});
+
+// 半角スペース等の直後・内部でEnter改行した際、
+// ブラウザが新しい行に .sp-nonzen を複製して後続の文字まで黄色くしてしまう問題を完全に遮断する
+e.addEventListener('keydown', (ev)=>{
+    if(ev.key === 'Enter'){
+        if(isComposing) return;
+        
+        let sel = window.getSelection();
+        if(sel && sel.rangeCount > 0){
+            let r = sel.getRangeAt(0);
+            let n = r.startContainer;
+            let sp = (n.nodeType === 1) ? n.closest('.sp-nonzen') : n.parentElement?.closest('.sp-nonzen');
+            if(sp){
+                let range = document.createRange();
+                range.setStartAfter(sp);
+                range.collapse(true);
+                sel.removeAllRanges();
+                sel.addRange(range);
+            }
+        }
+        
+        setTimeout(()=>{
+            cleanContaminatedSpans();
+            v();
+            s();
+        }, 0);
+    }
 });
 
 let formatTimer=null;
@@ -1313,6 +1506,7 @@ function scheduleFormat(){
     clearTimeout(formatTimer);
     formatTimer=setTimeout(()=>{
         if(isComposing)return;
+        cleanContaminatedSpans();
         highlightSpaces();
         autoFormatEditor();
         v();
@@ -1322,6 +1516,8 @@ function scheduleFormat(){
 }
 
 e.oninput=()=>{
+    cleanContaminatedSpans();
+    cleanExcessiveBlankLines();
     v();
     s();
     localStorage.setItem('n_r',e.innerHTML);
@@ -1718,6 +1914,25 @@ if(window.ResizeObserver){
           <button onclick="modalAddFolderInCurrentFolder()" style="flex:1;background:#e0f2fe;color:#0369a1;border:1px solid #7dd3fc;padding:7px;border-radius:5px;font-size:12px;font-weight:bold;cursor:pointer">
             + サブフォルダを追加
           </button>
+        </div>
+      </div>
+      <!-- フォルダ専用: フォルダ内の一括置換 -->
+      <div id="modalFolderReplaceSection" class="modal-section" style="display:none;background:#fefce8;border-color:#fef08a">
+        <div class="modal-sec-title" style="color:#854d0e;display:flex;align-items:center;justify-content:space-between">
+          <span>🔄 フォルダ内の一括文字列置換</span>
+        </div>
+        <div style="font-size:11px;color:#713f12;margin-bottom:8px;line-height:1.4">
+          このフォルダ（およびサブフォルダ）に含まれるすべての話の文字列を一括で検索・置換します。
+        </div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <input id="modalFolderRepFrom" placeholder="置換前の文字列（検索）" style="width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid #fde047;border-radius:4px;font-size:12px;outline:none;background:#fff" onkeydown="if(event.key==='Enter')document.getElementById('modalFolderRepTo').focus()">
+          <input id="modalFolderRepTo" placeholder="置換後の文字列" style="width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid #fde047;border-radius:4px;font-size:12px;outline:none;background:#fff" onkeydown="if(event.key==='Enter')execFolderBatchReplace()">
+          <div style="display:flex;gap:6px;margin-top:2px">
+            <button onclick="execFolderBatchReplace()" style="flex:1;background:#ca8a04;color:#fff;border:none;border-radius:4px;padding:7px 10px;font-size:12px;font-weight:bold;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:4px">
+              一括置換を実行
+            </button>
+          </div>
+          <div id="modalFolderRepMsg" style="font-size:11px;font-weight:bold;min-height:16px;color:#a16207"></div>
         </div>
       </div>
       <!-- 削除 -->
